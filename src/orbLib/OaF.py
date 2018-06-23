@@ -1,3 +1,4 @@
+import json
 import marshal
 import sys
 import time
@@ -240,6 +241,7 @@ class Notifier(resource.Resource, object):
     def __init__(self, rptSystem=None):
         resource.Resource.__init__(self)
         self.rptSystem = rptSystem
+        self.status = NONE
 
     def setStateFailed(self, failure):
         if (self.rptSystem != None):
@@ -256,8 +258,21 @@ class Notifier(resource.Resource, object):
     def render_GET(self, request):
         request.setResponseCode(415)
         return "No Representation<br/>Internal state:<br/>%s" % (
-            str(self.state))
+            str(self.status))
 
+    def setState(self, color, blink, message, level, status):
+        self.color = color
+        self.blink = blink
+        self.message = message
+        self.level = level
+        self.status = status
+
+
+class JsonNotifier(Notifier):
+    def render_GET(self, request):
+        return json.dumps(
+            {'color': self.color, 'blink': self.blink, 'message': self.message,
+             'level': self.level, 'status': self.status})
 
 class PickleNotifier(resource.Resource):
     def __init__(self):
