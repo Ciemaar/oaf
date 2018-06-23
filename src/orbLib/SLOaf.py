@@ -186,15 +186,6 @@ if __name__ == "__main__":
     # root.putChild('',HomePage())
     oafRoot = OaF.OafServer()
 
-    if (len(sys.argv) > 2):
-        ambientMonitor = OaF.System("Ambient Tech", oafRoot)
-        oafRoot.putSystem("AmbientMonitor", ambientMonitor)
-        oafRoot.putNotifier("orb",
-                            OaF.OrbNotifier(sys.argv[2], ambientMonitor))
-    else:
-        # orbRoot.putSystem("WilhelmPickle", OaF.PickledSystem("http://localhost:8000/orb/pickle",orbRoot))
-        pass
-
     slIndyMonitor = OaF.System("SL Indy")
 
     oafRoot.putNotifier("SLIndy", SLNotifier(slIndyMonitor))

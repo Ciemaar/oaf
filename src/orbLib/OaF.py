@@ -1,8 +1,6 @@
-import colorsys
 import marshal
 import sys
 import time
-from urllib import urlencode
 
 from twisted.internet import reactor, task
 from twisted.web import resource, server, client, error
@@ -19,18 +17,38 @@ CRITICAL = 5
 
 
 class System(resource.Resource, object):
+    ''' Systems - Systems represent an input point, something in the real or virtual
+world has developed a status and would like to communicate it to you.  They
+provide a simple end-point and get/post inferface to accept data.  Systems have
+ a few basic properties:
+  - status - a one word description of the status of the reporting state
+  commonly something from ['none', 'ok', 'working', 'success', 'warning',
+  'error']
+  - message - A free-form description of the status
+  - color - the color that this system matches to the given status as a rgb
+  tuple
+  - blink - a blink speed from 0-7
+  - level - how importantant this status is compared to other statuses that
+  this system might have
+
+  This is a base class, implementing only the functionality to set a
+  status and ack it, which reduces it's level to NONE pending the next status
+  change.
+  '''
     statusList = {"none": (NONE, WHITE, 0), "ok": (DEFAULT, GREEN, 0),
                   "working": (INFO, BLUE, 5),
                   "success": (INFO, GREEN, 0), "failure": (WARNING, RED, 0),
                   "error": (ALERT, RED, 7)}
 
     def render_POST(self, request):
+        '''Check for an ack input then render as a get.'''
         if (request.args.has_key('ack')):
             self.level = NONE
             self.oaf.statusChange(self)
         return self.render_GET(request)
 
     def render_GET(self, request):
+        ##TODO: setting status from a GET should be optional, default off
         if (request.args.has_key('status') and (
                 request.args['status'][0] != '')):
             if ((request.args.has_key('message')) and (
@@ -54,6 +72,8 @@ class System(resource.Resource, object):
     #                +historyTable+self.systemName+self.form%request.uri+"""<a href=".">parent oaf</a></body></html>""").encode('utf-8')
 
     def setStatus(self, value):
+        '''This setter simplifies interpretting a status to a single string
+        found in the statusList.'''
         self.statusTime = time.localtime()
         self.history = [(value, self.message, self.statusTime)] + self.history[
                                                                   0:12]
@@ -74,11 +94,13 @@ class System(resource.Resource, object):
     def getStatus(self):
         return self._status
 
+    ## TODO:  use @property instead
     status = property(getStatus, setStatus, doc="System Status")
 
     def __init__(self, systemName):
-        resource.Resource.__init__(self)
+        resource.Resource.__init__(self)  ## TODO:  switch to super()
         self.history = []
+        ## TODO: Switch to .format() or another more modern templating style
         self._formHeader = """
         <form ACTION="%s" METHOD="POST" ENCTYPE="application/x-www-form-urlencoded">
                  <input TYPE="SUBMIT" NAME="ack" VALUE="Acknowledge">
@@ -86,8 +108,7 @@ class System(resource.Resource, object):
         self._formBody = """Status: <select NAME="status"><option></option>"""
         for status in self.statusList.keys():
             self._formBody += "<option>%s</option>" % status
-        self._formBody += """</select><BR>
-Message: <input TYPE="TEXT" NAME="message" SIZE="25">"""
+        self._formBody += """</select><BR>Message: <input TYPE="TEXT" NAME="message" SIZE="25">"""
         self._formFooter = """<BR><input TYPE="SUBMIT" NAME="name_submit" VALUE="Submit">
         </FORM>
         """
@@ -238,27 +259,6 @@ class Notifier(resource.Resource, object):
             str(self.state))
 
 
-class OrbNotifier(Notifier):
-    def __init__(self, devId, rptSystem=None):
-        Notifier.__init__(self, rptSystem)
-        self.devId = devId
-        self.setState(WHITE, 0, "", NONE, "none")
-
-    def setState(self, color, blink, message, level, status):
-        hsvColor = colorsys.rgb_to_hsv(*color)
-        if (hsvColor[2] < .1):
-            colorCode = 36
-        else:
-            colorCode = int(hsvColor[0] * 36)
-        client.getPage(
-            "http://www.myambient.com:8080/java/my_devices/submitdata.jsp?" + \
-            urlencode(
-                {'devID': self.devId, 'anim': int(blink), 'color': colorCode,
-                 'comment': message})) \
-            .addErrback(self.setStateFailed).addCallback(self.setStateSuccess)
-
-
-##    def render_GET(self,request):
 class PickleNotifier(resource.Resource):
     def __init__(self):
         resource.Resource.__init__(self)
@@ -624,8 +624,6 @@ class PickledSystem(PageMonitor):
 
 
 if __name__ == "__main__":
-    print(to_qa)
-
     root = resource.Resource()
     # root.putChild('',HomePage())
     oafRoot = OafServer()
@@ -634,9 +632,6 @@ if __name__ == "__main__":
     # oafRoot.putSystem('name2', PageMonitor('https://example.com',oafRoot))
     # oafRoot.putSystem('name3', PageMonitor('https://example.com',oafRoot))
     # oafRoot.putSystem('name4', PageMonitor('https://example.com',oafRoot))
-
-    if (len(sys.argv) > 2):
-        oafRoot.putNotifier("orb", OrbNotifier(sys.argv[2]))
 
     root.putChild("orb", oafRoot)
     root.putChild("exform", exampleForm.Simple)
