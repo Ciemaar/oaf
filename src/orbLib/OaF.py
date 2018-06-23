@@ -16,14 +16,18 @@ INFO=2
 WARNING=3
 ALERT=4
 CRITICAL=5
+
+
 class System(resource.Resource,object):
     statusList={"none":(NONE,WHITE,0),"ok":(DEFAULT,GREEN,0),"working":(INFO,BLUE,5),
               "success":(INFO,GREEN,0),"failure":(WARNING,RED,0),"error":(ALERT,RED,7)}
+
     def render_POST(self,request):
         if(request.args.has_key('ack')):
             self.level=NONE
             self.oaf.statusChange(self)
         return self.render_GET(request)
+
     def render_GET(self,request):
         if(request.args.has_key('status') and (request.args['status'][0]!='')):
            if((request.args.has_key('message')) and (request.args['message'][0]!='')):
@@ -41,7 +45,8 @@ class System(resource.Resource,object):
                 +historyTable+self.systemName+self.form%request.uri+"""<a href=".">parent oaf</a></body></html>""")
 #        return ("""<html><body bgcolor="%s">OAF System:"""%getWebColor(self.color) \
 #                +historyTable+self.systemName+self.form%request.uri+"""<a href=".">parent oaf</a></body></html>""").encode('utf-8')
-    def setStatus(self,value):    
+
+    def setStatus(self,value):
         self.statusTime=time.localtime()
         self.history=[(value,self.message,self.statusTime)]+self.history[0:12]
         
@@ -57,9 +62,12 @@ class System(resource.Resource,object):
         self._status=value
         if(hasattr(self,"oaf")):
             self.oaf.statusChange(self)
+
     def getStatus(self):
         return self._status
     status=property(getStatus,setStatus,doc="System Status")
+
+
     def __init__(self,systemName):
         resource.Resource.__init__(self)
         self.history=[]
@@ -106,6 +114,7 @@ class OafServer(object,resource.Resource):
         foot="</body></html>"
         request.setHeader("Content-type", 'text/html; charset=UTF-8')
         return (head+currState+systemTable+foot).encode('utf-8')
+
     def putSystem(self,path,system):
         #print "adding "+str(system.__class__)
         if(not hasattr(system,"oaf")):
@@ -113,11 +122,12 @@ class OafServer(object,resource.Resource):
         self.systems[path]=system
         self._statusChange(system)
         self.putChild(path, system)
+
     def removeSystem(self,path):
         system=self.systems[path]
         del system.oaf
         del self.systems[path]
-    
+
     def putNotifier(self,path,notifier):
         if(notifier==None):
             if(path in self.notifiers):
@@ -128,6 +138,7 @@ class OafServer(object,resource.Resource):
             self.notifiers[path]=notifier
             notifier.setState(self.color,self.blink,self.systemName+": "+self.message,self.level,self.status)
             self.putChild(path,notifier)
+
     def getChild(self,path,request):
         #print "called getChild"+path
         if(path==""):
@@ -493,7 +504,9 @@ class PickledSystem(PageMonitor):
             #if there is any exception, assume garbled data, increment the warning level
             self._status="Exception in pickle parsing."
             self.warningLevel+=1
+
 if __name__=="__main__":
+    print(to_qa)
     
     root =resource.Resource()
     #root.putChild('',HomePage())

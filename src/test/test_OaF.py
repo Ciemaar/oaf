@@ -10,9 +10,9 @@ class OafServerTest(TestCase):
         self.oaf=OafServer()
         TestCase.__init__(self, *args,**kwargs)
     def test_putSystem(self):
-        pass
+        assert False, 'test Needed'
     def test_putNotifier(self):
-        pass
+        assert False, 'Test Needed'
 class SystemTest(TestCase):
     def __init__(self, *args, **kwargs):
         self.system=System("Test System Name")

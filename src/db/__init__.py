@@ -73,7 +73,7 @@ users_table=Table('users',meta,
                   Column('avname',String(256))
                   )
 
-class User(DBBase):
+class SLAvatar(DBBase):
     def __init__(self,avname,avuuid):
         self.avname=avname
         self.avuuid=avuuid
@@ -93,7 +93,7 @@ class User(DBBase):
         return SLOaf.SLOafServer(self.id)
         
 
-user_mapper= mapper( User, users_table, properties= {"oafs":relation(Oaf)})            
+user_mapper= mapper(SLAvatar, users_table, properties= {"oafs":relation(Oaf)})
 oaf_mapper= mapper( Oaf, oafs_table, properties= {"pagemonitors":relation(PageMonitor)})            
 page_mapper = mapper( PageMonitor, pagemonitors_table)
 
@@ -115,7 +115,7 @@ if __name__=="__main__":
     mmbx.pagemonitors.append(PageMonitor("http://example.com/"))
     mmbx.pagemonitors.append(PageMonitor("http://localhost/"))
 
-    cf = User(AVNAME, AVUUID)
+    cf = SLAvatar(AVNAME, AVUUID)
     cf.oafs.append(apf)
     cf.oafs.append(ivm)    
     Session.save(cf)
