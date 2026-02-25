@@ -1,0 +1,21 @@
+Metadata-Version: 2.4
+Name: orbLib
+Version: 0.0.1
+Summary: Twisted based monitoring framework.
+Author-email: Andy Fundinger <Andy@ciemaar.com>
+License: Pending
+Project-URL: Homepage, https://channel3b.wordpress.com/orbLib
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: sqlalchemy>=2.0
+Requires-Dist: twisted>=22.10.0
+Requires-Dist: pyserial>=3.5
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+
+# oaf
+The Orb Aggregation Framework is a framework for monitoring various systems and aggregating status information into a single view i.e. is everything ok?

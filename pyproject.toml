@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orbLib"
+version = "0.0.1"
+description = "Twisted based monitoring framework."
+readme = "README.md"
+authors = [
+  { name="Andy Fundinger", email="Andy@ciemaar.com" },
+]
+license = { text = "Pending" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "sqlalchemy>=2.0",
+    "twisted>=22.10.0",
+    # "wxpython>=4.2.0",  # Commented out due to build complexity in sandbox; re-enable if needed or for desktopSLED work
+    "pyserial>=3.5",
+]
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.1.0",
+    "tox>=4.0",
+]
+
+[project.urls]
+"Homepage" = "https://channel3b.wordpress.com/orbLib"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
+pythonpath = [
+    "src"
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I"]
+ignore = ["E402", "E501", "B026"]
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py310, py311, py312, lint
+isolated_build = True
+
+[testenv]
+deps =
+    pytest
+    sqlalchemy
+    twisted
+    pyserial
+commands =
+    pytest {posargs:tests}
+
+[testenv:lint]
+deps = ruff
+skip_install = true
+commands =
+    ruff check src tests
+    ruff format --check src tests
+"""
