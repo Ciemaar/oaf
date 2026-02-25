@@ -37,7 +37,7 @@ for user in db.User.all():
     userServer = user.getServer()
     oafRoot.putSystem(user.avname, userServer)
     for oaf in user.oafs:
-        print("placing " + oaf.OafName)
+        print("placing " + str(oaf.OafName))
         # must place before init because update is called in init and changes
         # the system name to that of the currently active systems
         oafResource = oaf.getOaf()
@@ -51,11 +51,11 @@ oafRoot.putSystem("dsexport", dsexport)
 
 oafRoot.putNotifier("pickle", OaF.PickleNotifier())
 
-root.putChild("oaf", oafRoot)
+root.putChild(b"oaf", oafRoot)  # type: ignore
 site = server.Site(root)
 if len(sys.argv) > 1:
-    reactor.listenTCP(int(sys.argv[1]), site)
+    reactor.listenTCP(int(sys.argv[1]), site)  # type: ignore
 else:
-    reactor.listenTCP(8585, site)
-reactor.run()
+    reactor.listenTCP(8585, site)  # type: ignore
+reactor.run()  # type: ignore
 print("Reactor stopped.")

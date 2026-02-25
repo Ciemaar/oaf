@@ -292,7 +292,7 @@ class OrbNotifier(Notifier):
             colorCode = 36
         else:
             colorCode = int(hsvColor[0] * 36)
-        client.getPage(
+        get_page(
             "http://www.myambient.com:8080/java/my_devices/submitdata.jsp?"
             + urlencode({"devID": self.devId, "anim": int(blink), "color": colorCode, "comment": message})
         ).addErrback(self.setStateFailed).addCallback(self.setStateSuccess)
@@ -687,14 +687,14 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         oafRoot.putNotifier("orb", OrbNotifier(sys.argv[2]))
 
-    root.putChild("orb", oafRoot)
-    root.putChild("exform", exampleForm.Simple)
+    root.putChild(b"orb", oafRoot)  # type: ignore
+    root.putChild(b"exform", exampleForm.Simple())  # type: ignore
     site = server.Site(root)
 
     if len(sys.argv) > 1:
-        reactor.listenTCP(int(sys.argv[1]), site)
+        reactor.listenTCP(int(sys.argv[1]), site)  # type: ignore
     else:
-        reactor.listenTCP(8000, site)
+        reactor.listenTCP(8000, site)  # type: ignore
 
-    reactor.run()
+    reactor.run()  # type: ignore
     print("Reactor stopped.")

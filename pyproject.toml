@@ -29,6 +29,7 @@ dev = [
     "pytest>=7.0",
     "ruff>=0.1.0",
     "tox>=4.0",
+    "pyright>=1.1.0",
 ]
 
 [project.urls]
@@ -54,10 +55,15 @@ target-version = "py310"
 select = ["E", "F", "B", "I"]
 ignore = ["E402", "E501", "B026"]
 
+[tool.pyright]
+include = ["src"]
+pythonVersion = "3.10"
+typeCheckingMode = "basic"
+
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py310, py311, py312, lint
+envlist = py310, py311, py312, lint, typecheck
 isolated_build = True
 
 [testenv]
@@ -75,4 +81,9 @@ skip_install = true
 commands =
     ruff check src tests
     ruff format --check src tests
+
+[testenv:typecheck]
+deps = pyright
+commands =
+    pyright
 """

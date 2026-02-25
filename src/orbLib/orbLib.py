@@ -17,4 +17,4 @@ def setColor(colorCode, anim=0, comment="No Comment", devID=AMBIENT_ORB_DEVID):
 
 
 if __name__ == "__main__":
-    print(setColor((int)(sys.argv[1]), "set+by+orbLib.py"))
+    print(setColor((int)(sys.argv[1]), 0, "set+by+orbLib.py"))

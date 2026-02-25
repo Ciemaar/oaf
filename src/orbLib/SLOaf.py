@@ -182,7 +182,7 @@ if __name__ == "__main__":
     oafRoot = OaF.OafServer()
 
     if len(sys.argv) > 2:
-        ambientMonitor = OaF.System("Ambient Tech", oafRoot)
+        ambientMonitor = OaF.System("Ambient Tech")
         oafRoot.putSystem("AmbientMonitor", ambientMonitor)
         oafRoot.putNotifier("orb", OaF.OrbNotifier(sys.argv[2], ambientMonitor))
     else:
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     oafRoot.putSystem("google", OaF.PageMonitor("http://google.com/"))
     oafRoot.putSystem("yahoo", OaF.PageMonitor("http://yahoo.com/", allowedErrors=("401",)))
     oafRoot.putSystem(
-        "litfactory", OaF.PageMonitor("http://localhost:8813/bookstore/Wilson", "Wilhelm Lit", allowedErrors=("405",))
+        "litfactory", OaF.PageMonitor("http://localhost:8813/bookstore/Wilson", allowedErrors=("405",))
     )
     oafRoot.putSystem("OAF Main", OaF.PageMonitor("http://localhost:8000/oaf"))
     oafRoot.putSystem("RedBlackTest", OaF.GoalSystem("RedBlackTest", 500))
@@ -206,7 +206,7 @@ if __name__ == "__main__":
     slSub.putSystem("shop", OaF.CountSystem("Areum Shop Counter", 2))
     slSub.putSystem("office", OaF.CountSystem("Pi Office Counter", 2))
     oafRoot.putSystem("slsystems", slSub)
-    oafRoot.putSystem("sldev", SLServer("Second Life Dev", oafRoot))
+    oafRoot.putSystem("sldev", SLServer("Second Life Dev", oaf=oafRoot))
 
     dsexport = OaF.SubServer("dsexport", oafRoot, OaF.ProcessMonitor)
     # dsexport.putChild("fill", OaF.System("phil",dsexport))
@@ -214,12 +214,12 @@ if __name__ == "__main__":
 
     oafRoot.putNotifier("pickle", OaF.PickleNotifier())
 
-    root.putChild("oaf", oafRoot)
-    root.putChild("exform", exampleForm.Simple())
+    root.putChild(b"oaf", oafRoot)  # type: ignore
+    root.putChild(b"exform", exampleForm.Simple())  # type: ignore
     site = server.Site(root)
     if len(sys.argv) > 1:
-        reactor.listenTCP(int(sys.argv[1]), site)
+        reactor.listenTCP(int(sys.argv[1]), site)  # type: ignore
     else:
-        reactor.listenTCP(8585, site)
-    reactor.run()
+        reactor.listenTCP(8585, site)  # type: ignore
+    reactor.run()  # type: ignore
     print("Reactor stopped.")

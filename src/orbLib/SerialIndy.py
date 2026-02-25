@@ -56,7 +56,7 @@ class SerialIndyNotifier(OaF.Notifier):
         statusCode = OaF.getWebColor(self.state["color"]) + "000%01X\r" % round(2.0 * self.state["blink"] / 9.0)
         print(statusCode)
         try:
-            self.serialPort.write(statusCode)
+            self.serialPort.write(statusCode.encode('utf-8'))
         except Exception as e:
             self.setStateFailed(e)
 
@@ -74,11 +74,11 @@ if __name__ == "__main__":
         portname = sys.argv[1]
         if portname != "/dev/null":
             ser = serial.Serial(sys.argv[1], 9600)
-            print("Using " + ser.portstr)  # check which port was really used
+            print("Using " + str(ser.portstr))  # check which port was really used
         setting = sys.argv[2]
         if len(sys.argv) < 3:
             if portname != "/dev/null":
-                ser.write(setting)  # write a string
+                ser.write(setting.encode('utf-8'))  # write a string
         else:
             testPattern = sys.argv[3]
             if testPattern in ("1", "4"):
@@ -125,7 +125,7 @@ if __name__ == "__main__":
                         for color in colorSet:
                             currSet = "#%06X%01X%02X%01X\r" % (color, trans, transRate, pulse)
                             if portname != "/dev/null":
-                                ser.write(currSet)
+                                ser.write(currSet.encode('utf-8'))
                             print(currSet)
                             try:
                                 delay = next(delaySeq)
@@ -141,12 +141,12 @@ if __name__ == "__main__":
         orbRoot.putSystem("WilhelmPickle", OaF.PickledSystem("http://localhost:8000/oaf/pickle", orbRoot))
         orbRoot.putNotifier("sled", SerialIndyNotifier(sys.argv[1]))
 
-        root.putChild("oaf", orbRoot)
+        root.putChild(b"oaf", orbRoot)  # type: ignore
 
         site = server.Site(root)
 
-        reactor.listenTCP(8000, site)
-        reactor.run()
+        reactor.listenTCP(8000, site)  # type: ignore
+        reactor.run()  # type: ignore
         print("Reactor stopped.")
 
     else:
