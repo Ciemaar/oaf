@@ -5,7 +5,7 @@ import time
 from urllib.parse import urlencode
 
 from twisted.internet import reactor, task
-from twisted.web import client, error, resource, server
+from twisted.web import error, resource, server
 from twisted.web.client import Agent, readBody
 
 
@@ -70,13 +70,13 @@ class System(resource.Resource):
             )
         historyTable += "</table>"
 
-        return str(
+        return (
             """<html><body bgcolor="%s">OAF System:""" % getWebColor(self.color)
             + historyTable
             + self.systemName
             + self.form % request.uri
             + """<a href=".">parent oaf</a></body></html>"""
-        )
+        ).encode("utf-8")
 
     #        return ("""<html><body bgcolor="%s">OAF System:"""%getWebColor(self.color) \
     #                +historyTable+self.systemName+self.form%request.uri+"""<a href=".">parent oaf</a></body></html>""").encode('utf-8')
@@ -277,7 +277,7 @@ class Notifier(resource.Resource):
 
     def render_GET(self, request):
         request.setResponseCode(415)
-        return "No Representation<br/>Internal state:<br/>%s" % (str(self.state))
+        return ("No Representation<br/>Internal state:<br/>%s" % (str(self.state))).encode("utf-8")
 
 
 class OrbNotifier(Notifier):
@@ -489,7 +489,7 @@ class GoalNetworkSystem(GoalSystem):
             )
         systemTable += "</table>"
         foot = """<a href="..">parent oaf</a></body></html>"""
-        return head + currState + systemTable + foot
+        return (head + currState + systemTable + foot).encode("utf-8")
 
 
 class Monitor(System):

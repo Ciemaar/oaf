@@ -56,7 +56,7 @@ class SerialIndyNotifier(OaF.Notifier):
         statusCode = OaF.getWebColor(self.state["color"]) + "000%01X\r" % round(2.0 * self.state["blink"] / 9.0)
         print(statusCode)
         try:
-            self.serialPort.write(statusCode.encode('utf-8'))
+            self.serialPort.write(statusCode.encode("utf-8"))
         except Exception as e:
             self.setStateFailed(e)
 
@@ -78,7 +78,7 @@ if __name__ == "__main__":
         setting = sys.argv[2]
         if len(sys.argv) < 3:
             if portname != "/dev/null":
-                ser.write(setting.encode('utf-8'))  # write a string
+                ser.write(setting.encode("utf-8"))  # write a string
         else:
             testPattern = sys.argv[3]
             if testPattern in ("1", "4"):
@@ -125,7 +125,7 @@ if __name__ == "__main__":
                         for color in colorSet:
                             currSet = "#%06X%01X%02X%01X\r" % (color, trans, transRate, pulse)
                             if portname != "/dev/null":
-                                ser.write(currSet.encode('utf-8'))
+                                ser.write(currSet.encode("utf-8"))
                             print(currSet)
                             try:
                                 delay = next(delaySeq)

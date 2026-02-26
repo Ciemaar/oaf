@@ -1,0 +1,9 @@
+sqlalchemy>=2.0
+twisted>=22.10.0
+pyserial>=3.5
+
+[dev]
+pytest>=7.0
+ruff>=0.1.0
+tox>=4.0
+pyright>=1.1.0

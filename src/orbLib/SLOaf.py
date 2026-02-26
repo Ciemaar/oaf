@@ -19,6 +19,7 @@ class SLNotifier(OaF.Notifier):
         OaF.Notifier.__init__(self, rptSystem)
         self.xmlProxy = xmlrpc.Proxy(b"http://xmlrpc.secondlife.com/cgi-bin/xmlrpc.cgi")
         self.rptSystem = rptSystem
+        self.state = {}
 
     def setState(self, color, blink, message, level, status):
         self.color = self.colorToVector(color)
@@ -39,7 +40,7 @@ class SLNotifier(OaF.Notifier):
             ).addErrback(self.setStateFailed).addCallback(self.setStateSuccess)
 
     def _SLCSV(self):
-        return '%s,%d,%s,%f,"%s"' % (self.color, self.blink, self.status, self.level, self.message)
+        return ('%s,%d,%s,%f,"%s"' % (self.color, self.blink, self.status, self.level, self.message)).encode("utf-8")
 
     def colorToVector(self, color):
         return "<%f,%f,%f>" % color
@@ -195,9 +196,7 @@ if __name__ == "__main__":
     oafRoot.putSystem("SLIndyMonitor", slIndyMonitor)
     oafRoot.putSystem("google", OaF.PageMonitor("http://google.com/"))
     oafRoot.putSystem("yahoo", OaF.PageMonitor("http://yahoo.com/", allowedErrors=("401",)))
-    oafRoot.putSystem(
-        "litfactory", OaF.PageMonitor("http://localhost:8813/bookstore/Wilson", allowedErrors=("405",))
-    )
+    oafRoot.putSystem("litfactory", OaF.PageMonitor("http://localhost:8813/bookstore/Wilson", allowedErrors=("405",)))
     oafRoot.putSystem("OAF Main", OaF.PageMonitor("http://localhost:8000/oaf"))
     oafRoot.putSystem("RedBlackTest", OaF.GoalSystem("RedBlackTest", 500))
 
