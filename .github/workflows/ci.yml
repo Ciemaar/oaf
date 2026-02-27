@@ -43,9 +43,13 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install ruff
+        pip install .[dev]
 
     - name: Lint with ruff
       run: |
         ruff check src tests
         ruff format --check src tests
+
+    - name: Check Markdown formatting
+      run: |
+        mdformat --check README.md .github/copilot-instructions.md

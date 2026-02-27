@@ -4,22 +4,22 @@ The Orb Aggregation Framework (OAF) is a Python-based system for monitoring vari
 
 ## Features
 
--   **System Monitoring:** Monitor web pages, processes, and custom metrics.
--   **Aggregation:** Combine statuses from multiple systems into a hierarchical view.
--   **Notifications:** Support for:
-    -   Ambient Orb devices.
-    -   Serial LED devices (SLED).
-    -   Desktop System Tray (via `desktopSLED`).
-    -   Second Life objects.
--   **Web Interface:** Built-in web server to view system status.
+- **System Monitoring:** Monitor web pages, processes, and custom metrics.
+- **Aggregation:** Combine statuses from multiple systems into a hierarchical view.
+- **Notifications:** Support for:
+  - Ambient Orb devices.
+  - Serial LED devices (SLED).
+  - Desktop System Tray (via `desktopSLED`).
+  - Second Life objects.
+- **Web Interface:** Built-in web server to view system status.
 
 ## Requirements
 
--   Python 3.10+
--   `twisted`
--   `sqlalchemy` (2.0+)
--   `pyserial`
--   `wxpython` (optional, for `desktopSLED` GUI)
+- Python 3.10+
+- `twisted`
+- `sqlalchemy` (2.0+)
+- `pyserial`
+- `wxpython` (optional, for `desktopSLED` GUI)
 
 ## Installation
 
@@ -120,11 +120,11 @@ tox -e typecheck
 
 ## Project Structure
 
--   `src/orbLib`: Core framework logic (OaF, monitors, notifiers).
--   `src/db`: Database models and connection logic (SQLAlchemy).
--   `src/desktopSLED`: wxPython-based system tray application.
--   `src/slvend`: Second Life vending integration (legacy).
--   `tests`: Unit tests (pytest).
+- `src/orbLib`: Core framework logic (OaF, monitors, notifiers).
+- `src/db`: Database models and connection logic (SQLAlchemy).
+- `src/desktopSLED`: wxPython-based system tray application.
+- `src/slvend`: Second Life vending integration (legacy).
+- `tests`: Unit tests (pytest).
 
 ## License
 

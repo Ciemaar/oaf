@@ -30,6 +30,7 @@ dev = [
     "ruff>=0.1.0",
     "tox>=4.0",
     "pyright>=1.1.0",
+    "mdformat>=0.7.0",
 ]
 
 [project.urls]
@@ -76,11 +77,23 @@ commands =
     pytest {posargs:tests}
 
 [testenv:lint]
-deps = ruff
+deps =
+    ruff
+    mdformat
 skip_install = true
 commands =
     ruff check src tests
     ruff format --check src tests
+    mdformat --check README.md .github/copilot-instructions.md
+
+[testenv:format]
+deps =
+    ruff
+    mdformat
+skip_install = true
+commands =
+    ruff format src tests
+    mdformat README.md .github/copilot-instructions.md
 
 [testenv:typecheck]
 deps = pyright
