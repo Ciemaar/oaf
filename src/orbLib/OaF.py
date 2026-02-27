@@ -1,4 +1,5 @@
 import colorsys
+import html
 import marshal
 import sys
 import time
@@ -64,8 +65,8 @@ class System(resource.Resource):
         historyTable = "<table>"
         for line in self.history:
             historyTable += "<tr><td>%s</td><td>%s</td><td>%s</td></tr>" % (
-                line[0],
-                line[1],
+                html.escape(str(line[0])),
+                html.escape(str(line[1])),
                 time.strftime("%a %d %b %Y %H:%M:%S", line[2]),
             )
         historyTable += "</table>"
@@ -73,8 +74,8 @@ class System(resource.Resource):
         return (
             """<html><body bgcolor="%s">OAF System:""" % getWebColor(self.color)
             + historyTable
-            + self.systemName
-            + self.form % request.uri
+            + html.escape(self.systemName)
+            + self.form % request.uri.decode("utf-8")
             + """<a href=".">parent oaf</a></body></html>"""
         ).encode("utf-8")
 
@@ -111,7 +112,7 @@ class System(resource.Resource):
                  """
         self._formBody = """Status: <select NAME="status"><option></option>"""
         for status in list(self.statusList.keys()):
-            self._formBody += "<option>%s</option>" % status
+            self._formBody += "<option>%s</option>" % html.escape(status)
         self._formBody += """</select><BR>
 Message: <input TYPE="TEXT" NAME="message" SIZE="25">"""
         self._formFooter = """<BR><input TYPE="SUBMIT" NAME="name_submit" VALUE="Submit">
@@ -157,12 +158,12 @@ class OafServer(resource.Resource):
             systemTable += (
                 """<tr bgcolor="white"><td><a href="%s/%s">%s</a></td><td bgcolor="%s">%s</td><td>%s</td><td>%s</td></tr>"""
                 % (
-                    request.uri,
-                    path,
-                    currSystem.systemName,
+                    request.uri.decode("utf-8"),
+                    html.escape(path),
+                    html.escape(currSystem.systemName),
                     getWebColor(currSystem.color),
-                    currSystem.status,
-                    currSystem.message,
+                    html.escape(currSystem.status),
+                    html.escape(currSystem.message),
                     time.strftime("%a %d %b %Y %H:%M:%S", currSystem.statusTime),
                 )
             )
@@ -478,12 +479,12 @@ class GoalNetworkSystem(GoalSystem):
             systemTable += (
                 """<tr bgcolor="white"><td><a href="%s/%s">%s</a></td><td bgcolor="%s">%s</td><td>%s</td><td>%s</td></tr>"""
                 % (
-                    request.uri,
-                    path,
-                    currSystem.systemName,
+                    request.uri.decode("utf-8"),
+                    html.escape(path),
+                    html.escape(currSystem.systemName),
                     getWebColor(currSystem.color),
-                    currSystem.status,
-                    currSystem.message,
+                    html.escape(currSystem.status),
+                    html.escape(currSystem.message),
                     time.strftime("%a %d %b %Y %H:%M:%S", currSystem.statusTime),
                 )
             )

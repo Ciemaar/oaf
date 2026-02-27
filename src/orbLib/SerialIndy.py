@@ -20,6 +20,8 @@ def ooColors():
 
 burstCount = 0
 zeroDelayCount = 1000000
+burstPeriod = None
+normalDelay = 2.0
 
 
 def delayCount():
