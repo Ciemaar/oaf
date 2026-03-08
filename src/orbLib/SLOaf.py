@@ -1,12 +1,14 @@
 import sys
+import xmlrpc.client as xmlrpclib
+from io import BytesIO
 
 from twisted.internet import reactor
-from twisted.web import resource, server, xmlrpc
+from twisted.web import resource, server
+from twisted.web.client import Agent, FileBodyProducer, readBody
+from twisted.web.http_headers import Headers
 
 from . import OaF, exampleForm
 from .OaF import PageMonitor
-
-# import xmlrpclib
 
 PRIMARY = 1
 SECONDARY = 2
@@ -17,9 +19,23 @@ TEMPORB = 4
 class SLNotifier(OaF.Notifier):
     def __init__(self, rptSystem=None):
         OaF.Notifier.__init__(self, rptSystem)
-        self.xmlProxy = xmlrpc.Proxy(b"http://xmlrpc.secondlife.com/cgi-bin/xmlrpc.cgi")
+        self.agent = Agent(reactor)
+        self.rpc_url = b"http://xmlrpc.secondlife.com/cgi-bin/xmlrpc.cgi"
         self.rptSystem = rptSystem
         self.state = {}
+
+    async def _callRemote(self, method, *args):
+        payload = xmlrpclib.dumps(args, methodname=method).encode("utf-8")
+        body = FileBodyProducer(BytesIO(payload))
+        headers = Headers({"Content-Type": ["text/xml"]})
+
+        try:
+            response = await self.agent.request(b"POST", self.rpc_url, headers, body)
+            response_body = await readBody(response)
+            result = xmlrpclib.loads(response_body.decode("utf-8"))[0][0]
+            self.setStateSuccess(result)
+        except Exception as e:
+            self.setStateFailed(e)
 
     def setState(self, color, blink, message, level, status):
         self.color = self.colorToVector(color)
@@ -29,15 +45,14 @@ class SLNotifier(OaF.Notifier):
         self.status = status
 
         if hasattr(self, "SLChannel"):
-            # print "sending on: "+self.SLChannel
+            from twisted.internet.defer import ensureDeferred
 
-            # xmlrpclib.ServerProxy("http://xmlrpc.secondlife.com/cgi-bin/xmlrpc.cgi").llRemoteData(self.SLChannel,'[%d,%d,"%s","%s","%s",%d]'%(self.color,self.blink,self.message,self.status,self.systemName,self.level),self.color)
-            # xmlrpclib.ServerProxy("http://xmlrpc.secondlife.com/cgi-bin/xmlrpc.cgi").llRemoteData(Channel=self.SLChannel,StringValue='[%d,%d,"%s","%s","%s",%d]'%(self.color,self.blink,self.message,self.status,self.systemName,self.level),IntValue=self.color)
-            # print xmlrpc.Proxy("http://xmlrpc.secondlife.com/cgi-bin/xmlrpc.cgi").callRemote("llRemoteData",Channel=self.SLChannel,StringValue='[%d,%d,"%s","%s","%s",%d]'%(self.color,self.blink,self.message,self.status,self.systemName,self.level),IntValue=self.color)
-
-            self.xmlProxy.callRemote(
-                "llRemoteData", {"Channel": self.SLChannel, "StringValue": self._SLCSV(), "IntValue": 42}
-            ).addErrback(self.setStateFailed).addCallback(self.setStateSuccess)
+            ensureDeferred(
+                self._callRemote(
+                    "llRemoteData",
+                    {"Channel": self.SLChannel, "StringValue": self._SLCSV().decode("utf-8"), "IntValue": 42},
+                )
+            )
 
     def _SLCSV(self):
         return ('%s,%d,%s,%f,"%s"' % (self.color, self.blink, self.status, self.level, self.message)).encode("utf-8")
@@ -71,9 +86,11 @@ class SLNotifier(OaF.Notifier):
     def setStateFailed(self, failure):
         """If a temporary indicator fails wipe out the connection and report status
         as none, if permanent indicator fails, dump it to reporting system."""
-        failure.trap(xmlrpc.Fault)
 
-        if (self.SLType == TEMPORB) and (failure.value.faultCode == 1):
+        # Note: In the new async/await architecture, failure might be a direct Exception
+        faultCode = getattr(failure, "faultCode", None)
+
+        if (getattr(self, "SLType", None) == TEMPORB) and (faultCode == 1):
             del self.SLChannel
             print("clearing non-responsive temporary orb")
             if self.rptSystem is not None:

@@ -26,10 +26,6 @@ class DBBase(Base):
     __abstract__ = True
 
     @classmethod
-    def query(cls):
-        return Session.query(cls)
-
-    @classmethod
     def get(cls, id):
         return Session.get(cls, id)
 

@@ -10,20 +10,15 @@ from twisted.web import error, resource, server
 from twisted.web.client import Agent, readBody
 
 
-def get_page(url):
+async def get_page(url):
     agent = Agent(reactor)
     if isinstance(url, str):
         url = url.encode("utf-8")
 
-    d = agent.request(b"GET", url)
-
-    def handle_response(response):
-        if response.code >= 400:
-            raise error.Error(str(response.code), response.phrase, None)
-        return readBody(response)
-
-    d.addCallback(handle_response)
-    return d
+    response = await agent.request(b"GET", url)
+    if response.code >= 400:
+        raise error.Error(str(response.code), response.phrase, None)
+    return await readBody(response)
 
 
 NONE = 0
@@ -288,15 +283,25 @@ class OrbNotifier(Notifier):
         self.setState(WHITE, 0, "", NONE, "none")
 
     def setState(self, color, blink, message, level, status):
+        from twisted.internet.defer import ensureDeferred
+
         hsvColor = colorsys.rgb_to_hsv(*color)
         if hsvColor[2] < 0.1:
             colorCode = 36
         else:
             colorCode = int(hsvColor[0] * 36)
-        get_page(
-            "http://www.myambient.com:8080/java/my_devices/submitdata.jsp?"
-            + urlencode({"devID": self.devId, "anim": int(blink), "color": colorCode, "comment": message})
-        ).addErrback(self.setStateFailed).addCallback(self.setStateSuccess)
+
+        async def _do_request():
+            try:
+                res = await get_page(
+                    "http://www.myambient.com:8080/java/my_devices/submitdata.jsp?"
+                    + urlencode({"devID": self.devId, "anim": int(blink), "color": colorCode, "comment": message})
+                )
+                self.setStateSuccess(res)
+            except Exception as e:
+                self.setStateFailed(e)
+
+        ensureDeferred(_do_request())
 
 
 ##    def render_GET(self,request):
@@ -590,9 +595,19 @@ class PageMonitor(Monitor):
         Monitor.checkSystem(self)
 
     def getPage(self):
+        from twisted.internet.defer import ensureDeferred
+
         if self.pingCount <= 3 * self.threshold:
             self.pingCount += 1
-            get_page(self.page).addErrback(self.pageError).addCallback(self.pageRetrieved)
+
+            async def _do_request():
+                try:
+                    res = await get_page(self.page)
+                    self.pageRetrieved(res)
+                except Exception as e:
+                    self.pageError(e)
+
+            ensureDeferred(_do_request())
 
     def pageRetrieved(self, data):
 
