@@ -21,6 +21,11 @@ The Orb Aggregation Framework (OAF) is a Python-based system for monitoring vari
 - `pyserial`
 - `wxpython` (optional, for `desktopSLED` GUI)
 
+## Documentation
+
+- [User Guide](docs/user_guide.md): Installation, concepts, and usage instructions.
+- [Developer Guide](docs/developer_guide.md): Architecture, environment setup, and contribution guidelines.
+
 ## Installation
 
 This project uses a standard `src` layout and `pyproject.toml`.

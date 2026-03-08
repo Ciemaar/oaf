@@ -84,7 +84,7 @@ skip_install = true
 commands =
     ruff check src tests
     ruff format --check src tests
-    mdformat --check README.md .github/copilot-instructions.md
+    mdformat --check README.md .github/copilot-instructions.md docs/
 
 [testenv:format]
 deps =
@@ -93,7 +93,7 @@ deps =
 skip_install = true
 commands =
     ruff format src tests
-    mdformat README.md .github/copilot-instructions.md
+    mdformat README.md .github/copilot-instructions.md docs/
 
 [testenv:typecheck]
 deps = pyright
