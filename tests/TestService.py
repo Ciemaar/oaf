@@ -3,9 +3,7 @@ import sys
 from twisted.internet import reactor
 from twisted.web import resource, server
 
-import db
-
-from . import MailOaf, OaF, SLOaf
+from orbLib import OaF
 
 MAIL_SERVER = ""
 MAIL_USER = ""
@@ -15,37 +13,17 @@ root = resource.Resource()
 # root.putChild('',HomePage())
 oafRoot = OaF.OafServer(None)
 
+oafRoot.putSystem("BasicSystem", OaF.System("Basic System"))
+oafRoot.putNotifier("BasicNotifier", OaF.Notifier("Basic Notifier"))
+oafRoot.putNotifier("JsonNotifier", OaF.JsonNotifier("Json Notifier"))
 
-slIndyMonitor = OaF.System("SL Indy")
-
-oafRoot.putNotifier("SLIndy", SLOaf.SLNotifier(slIndyMonitor))
-oafRoot.putSystem("SLIndyMonitor", slIndyMonitor)
 oafRoot.putSystem("RedBlackTest", OaF.GoalSystem("RedBlackTest", 500))
-oafRoot.putSystem("IMAPtest", MailOaf.IMAPMailMonitor(MAIL_SERVER, MAIL_USER, MAIL_PASSWORD))
-oafRoot.putSystem("POP3test", MailOaf.POP3MailMonitor(MAIL_SERVER, MAIL_USER, MAIL_PASSWORD))
 
 slSub = OaF.ScaledSubServer("Second Life systems", oafRoot, OaF.CountSystem, 1)
 
 slSub.putSystem("shop", OaF.CountSystem("Areum Shop Counter", 2))
 slSub.putSystem("office", OaF.CountSystem("Pi Office Counter", 2))
 oafRoot.putSystem("slsystems", slSub)
-oafRoot.putSystem("sldev", SLOaf.SLServer("Second Life Dev"))
-
-from sqlalchemy import select
-
-for user in db.Session.scalars(select(db.SLAvatar)).all():
-    print(("User %s" % (user.avname)))
-    # user.restoreRunVars()
-    userServer = user.getServer()
-    oafRoot.putSystem(user.avname, userServer)
-    for oaf in user.oafs:
-        print("placing " + str(oaf.OafName))
-        # must place before init because update is called in init and changes
-        # the system name to that of the currently active systems
-        oafResource = oaf.getOaf()
-        userServer.putSystem(oaf.OafName, oafResource)
-
-print("Database load complete")
 
 dsexport = OaF.SubServer("dsexport", oafRoot, OaF.ProcessMonitor)
 # dsexport.putChild("fill", OaF.System("phil",dsexport))

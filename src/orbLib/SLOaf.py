@@ -72,9 +72,9 @@ class SLNotifier(OaF.Notifier):
         if request.getHeader("User-Agent")[0:15] == "Second Life LSL":
             print("Got SL Request")
             self.SLOrbID = request.getHeader("HTTP_X_SecondLife_Object_Key")
-            if "channel" in request.args:
-                self.SLChannel = request.args["channel"][0]
-                self.SLType = int(request.args.get("type", (1,))[0])
+            if b"channel" in request.args:
+                self.SLChannel = request.args[b"channel"][0].decode("utf-8")
+                self.SLType = int(request.args.get(b"type", (1,))[0])
                 print("SLType: %d" % self.SLType)
             return self._SLCSV()
         return OaF.Notifier.render_GET(self, request)
@@ -161,9 +161,9 @@ class SLServer(OaF.SubServer):
                 self.monitorCount += 1
 
     def updateFromRequest(self, request):
-        if "config" in request.args and int(request.args["config"][0]) > self.configVersion:
-            self.watchedUrls = request.args.get("watchedUrls", [])[0:4]
-            self.configVersion = int(request.args["config"][0])
+        if b"config" in request.args and int(request.args[b"config"][0]) > self.configVersion:
+            self.watchedUrls = [u.decode("utf-8") for u in request.args.get(b"watchedUrls", [])[0:4]]
+            self.configVersion = int(request.args[b"config"][0])
             self.needsConfig = False
         return self.render_GET(request)
 

@@ -97,10 +97,10 @@ class MailMonitor(Monitor):
 
 class IMAPMailMonitor(MailMonitor):
     def __init__(self, server, username, password):
-        super(IMAPMailMonitor, self).__init__("Mail monitor for %s@%s (IMAP)" % (username, server))
         self.server = server
         self.username = username
         self.password = password
+        super(IMAPMailMonitor, self).__init__("Mail monitor for %s@%s (IMAP)" % (username, server))
 
     def getNewMailCount(self):
         factory = IMAPMailCountFactory(self.username, self.password)
@@ -110,10 +110,10 @@ class IMAPMailMonitor(MailMonitor):
 
 class POP3MailMonitor(MailMonitor):
     def __init__(self, server, username, password):
-        super(POP3MailMonitor, self).__init__("Mail monitor for %s@%s (POP3)" % (username, server))
         self.server = server
         self.username = username
         self.password = password
+        super(POP3MailMonitor, self).__init__("Mail monitor for %s@%s (POP3)" % (username, server))
 
     def getNewMailCount(self):
         factory = POP3CountFactory(self.username, self.password)

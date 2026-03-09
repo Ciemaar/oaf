@@ -15,7 +15,6 @@ root = resource.Resource()
 # root.putChild('',HomePage())
 oafRoot = OaF.OafServer(None)
 
-
 slIndyMonitor = OaF.System("SL Indy")
 
 oafRoot.putNotifier("SLIndy", SLOaf.SLNotifier(slIndyMonitor))
@@ -34,12 +33,12 @@ oafRoot.putSystem("sldev", SLOaf.SLServer("Second Life Dev"))
 from sqlalchemy import select
 
 for user in db.Session.scalars(select(db.SLAvatar)).all():
-    print(("User %s" % (user.avname)))
+    print(("SLAvatar %s" % (user.avname)))
     # user.restoreRunVars()
     userServer = user.getServer()
     oafRoot.putSystem(user.avname, userServer)
     for oaf in user.oafs:
-        print("placing " + str(oaf.OafName))
+        print("placing " + oaf.OafName)
         # must place before init because update is called in init and changes
         # the system name to that of the currently active systems
         oafResource = oaf.getOaf()

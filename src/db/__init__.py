@@ -72,7 +72,7 @@ class Oaf(DBBase):
     OafName: Mapped[Optional[str]] = mapped_column(String(20))
     AVUUID: Mapped[Optional[str]] = mapped_column(String(48))
 
-    user: Mapped["User"] = relationship(back_populates="oafs")
+    user: Mapped["SLAvatar"] = relationship(back_populates="oafs")
     pagemonitors: Mapped[List["PageMonitor"]] = relationship(back_populates="oaf")
 
     def __init__(self, oafName="System", avuuid=None):
@@ -86,7 +86,7 @@ class Oaf(DBBase):
         return SLOaf.BoundSLOafServer(self)
 
 
-class User(DBBase):
+class SLAvatar(DBBase):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -123,7 +123,7 @@ if __name__ == "__main__":
         mmbx.pagemonitors.append(PageMonitor("http://example.com/"))
         mmbx.pagemonitors.append(PageMonitor("http://localhost/"))
 
-        cf = User(AVNAME, AVUUID)
+        cf = SLAvatar(AVNAME, AVUUID)
         cf.oafs.append(apf)
         cf.oafs.append(ivm)
 

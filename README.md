@@ -1,136 +1,33 @@
-# Orb Aggregation Framework (OAF)
+# oaf
 
-The Orb Aggregation Framework (OAF) is a Python-based system for monitoring various systems and aggregating status information into a single view (i.e., "Is everything ok?"). It uses `Twisted` for asynchronous networking, `SQLAlchemy` for data persistence, and supports various notifiers including hardware Orbs (Ambient Devices) and a desktop system tray icon (desktopSLED).
+The Oaf Aggregation Framework is a framework for monitoring various systems and
+aggregating status information into a single view i.e. is everything ok? It
+is designed to support an individual's view of their world and any number of
+key inputs to it.
 
-## Features
+# Key resources - all depescendant from resource.Resource
 
-- **System Monitoring:** Monitor web pages, processes, and custom metrics.
-- **Aggregation:** Combine statuses from multiple systems into a hierarchical view.
-- **Notifications:** Support for:
-  - Ambient Orb devices.
-  - Serial LED devices (SLED).
-  - Desktop System Tray (via `desktopSLED`).
-  - Second Life objects.
-- **Web Interface:** Built-in web server to view system status.
-
-## Requirements
-
-- Python 3.10+
-- `twisted`
-- `sqlalchemy` (2.0+)
-- `pyserial`
-- `wxpython` (optional, for `desktopSLED` GUI)
-
-## Documentation
-
-- [User Guide](docs/user_guide.md): Installation, concepts, and usage instructions.
-- [Developer Guide](docs/developer_guide.md): Architecture, environment setup, and contribution guidelines.
-
-## Installation
-
-This project uses a standard `src` layout and `pyproject.toml`.
-
-### For Usage
-
-```bash
-pip install .
-```
-
-To install with GUI support (if your environment supports `wxpython`):
-
-```bash
-# Ensure system dependencies for wxPython are installed (e.g., gtk3 on Linux)
-pip install .
-# pip install wxpython  # You may need to install this manually if not in the package deps due to platform specificities
-```
-
-### For Development
-
-Install the package in editable mode with development dependencies:
-
-```bash
-pip install -e .[dev]
-```
-
-## Usage
-
-### Running the Server
-
-To start the main OAF server:
-
-```bash
-python -m orbLib.main
-```
-
-By default, this starts a web server on port 8585 (or the port specified as an argument).
-
-### Running desktopSLED (GUI)
-
-To start the desktop system tray monitor:
-
-```bash
-python -m desktopSLED
-```
-
-### Running Serial Indy
-
-To control a serial indicator device:
-
-```bash
-python -m orbLib.SerialIndy <port> <command>
-```
-
-## Development
-
-This project uses modern Python tooling.
-
-### Testing
-
-Run tests using `pytest` or `tox`:
-
-```bash
-# Run all tests
-pytest
-
-# Run tests across multiple python versions (if available)
-tox
-```
-
-### Linting and Formatting
-
-We use `ruff` for linting and formatting:
-
-```bash
-# Check for linting errors
-ruff check src tests
-
-# Format code
-ruff format src tests
-
-# Run via tox
-tox -e lint
-```
-
-### Type Checking
-
-We use `pyright` for static type checking:
-
-```bash
-# Run type checks
-pyright
-
-# Run via tox
-tox -e typecheck
-```
-
-## Project Structure
-
-- `src/orbLib`: Core framework logic (OaF, monitors, notifiers).
-- `src/db`: Database models and connection logic (SQLAlchemy).
-- `src/desktopSLED`: wxPython-based system tray application.
-- `src/slvend`: Second Life vending integration (legacy).
-- `tests`: Unit tests (pytest).
-
-## License
-
-Pending.
+- Systems - Systems represent an input point, something in the real or virtual
+  world has developed a status and would like to communicate it to you. They
+  provide a simple end-point and get/post inferface to accept data. Systems have
+  a few basic properties:
+  - status - a one word description of the status of the reporting state
+    commonly something from \['none', 'ok', 'working', 'success', 'warning',
+    'error'\]
+  - message - A free-form description of the status
+  - color - the color that this system matches to the given status as a rgb
+    tuple
+  - blink - a blink speed from 0-7
+  - level - how importantant this status is compared to other statuses that
+    this system might have
+- Notifiers - notifiers expose the state of a system or systems for view. In
+  the trivial case this is equivalent to going to read the systems page itself,
+  but notifiers can report via other protocols, such as push, pager, or similar.
+- Servers - Servers tie together lists of systems and notifers. Beyond the
+  simple repeating function they will process the levels and relative importance
+  of the various systems to pick one system that should be the user's greatest
+  concern. This is the color, status, blink, and message that is sent to all
+  notifiers.
+  - SubServers allow the summarization logic to be applied hierachically,
+    serving as servers and systems and thereby supporting notifications for
+    designated areas.
