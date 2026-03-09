@@ -21,7 +21,7 @@ class SledApp(wx.App):
         return True
 
 
-if __name__ == "__main__":
+def main():
     from twisted.internet import reactor
 
     root = resource.Resource()
@@ -49,3 +49,7 @@ if __name__ == "__main__":
     print("Web Interface at http://localhost:%d/sled" % port)
     reactor.registerWxApp(sledApp)
     reactor.run()
+
+
+if __name__ == "__main__":
+    main()

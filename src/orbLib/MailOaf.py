@@ -8,16 +8,19 @@ class POP3CountProtocol(pop3client.POP3Client):
     allowInsecureLogin = True
 
     def serverGreeting(self, greeting):
+        from twisted.internet.defer import ensureDeferred
+
         pop3client.POP3Client.serverGreeting(self, greeting)
-        login = self.login(self.factory.username, self.factory.password)
-        login.addCallback(self._loggedIn)
-        login.chainDeferred(self.factory.deferred)
 
-    def _loggedIn(self, result):
-        return self.stat().addCallback(self.gotStat)
+        async def _do_login():
+            try:
+                await self.login(self.factory.username, self.factory.password)
+                stat = await self.stat()
+                self.factory.deferred.callback(stat[0])
+            except Exception as e:
+                self.factory.deferred.errback(e)
 
-    def gotStat(self, stat):
-        return stat[0]
+        ensureDeferred(_do_login())
 
 
 class POP3CountFactory(protocol.ClientFactory):
@@ -34,21 +37,25 @@ class POP3CountFactory(protocol.ClientFactory):
 
 class IMAPMailCountProtocol(imap4.IMAP4Client):
     def serverGreeting(self, capabilities):
-        login = self.login(self.factory.username, self.factory.password)
-        login.addCallback(self.__loggedIn)
-        login.chainDeferred(self.factory.deferred)
+        from twisted.internet.defer import ensureDeferred
 
-    def __loggedIn(self, results):
-        return self.list("", "*").addCallback(self.__gotMailboxInfo)
+        async def _do_login():
+            try:
+                await self.login(self.factory.username, self.factory.password)
+                # Note: list() returns a tuple containing the list of mailboxes
+                mailbox_list = await self.list("", "*")
+                inbox_name = "inbox"
+                for _flags, _hierarchy, name in mailbox_list:
+                    if name.lower() == "inbox":
+                        inbox_name = name
+                        break
 
-    def __getMailboxList(self, list):
-        for flags, _hierarchy, name in list:
-            if list.lower() == "inbox":
-                print(flags)
-                self.examine(name).addCallback(self.__gotMailboxInfo)
+                info = await self.examine(inbox_name)
+                self.factory.deferred.callback(info.get("UNSEEN", 0))
+            except Exception as e:
+                self.factory.deferred.errback(e)
 
-    def __gotMailboxInfo(self, info):
-        return info["UNSEEN"]
+        ensureDeferred(_do_login())
 
     def connectionLost(self, reason):
         if not self.factory.deferred.called:
@@ -73,7 +80,16 @@ class MailMonitor(Monitor):
         self.baseNew = 0
 
     def checkSystem(self):
-        self.getNewMailCount().addCallback(self.gotNewMailCount).addErrback(self.errorInMailCheck)
+        from twisted.internet.defer import ensureDeferred
+
+        async def _do_check():
+            try:
+                count = await self.getNewMailCount()
+                self.gotNewMailCount(count)
+            except Exception as e:
+                self.errorInMailCheck(e)
+
+        ensureDeferred(_do_check())
 
     def gotNewMailCount(self, count):
         if count == self.baseNew:

@@ -27,6 +27,7 @@ This project follows a standard `src` layout:
 - Use modern Python 3.10+ syntax.
 - Prefer `pathlib` over `os.path`.
 - Ensure all new dependencies are added to `pyproject.toml`.
+- **Coding Style:** This project follows the [Twisted Coding Standard](https://twistedmatrix.com/documents/current/core/development/policy/coding-standard.html) where it conflicts with PEP 8. Most notably, use `camelCase` for method and variable names instead of `snake_case`.
 
 ### Twisted & Async
 

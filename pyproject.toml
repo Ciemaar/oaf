@@ -27,6 +27,7 @@ requires-python = ">=3.10"
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
+    "pytest-cov>=4.0",
     "ruff>=0.1.0",
     "tox>=4.0",
     "pyright>=1.1.0",
@@ -40,7 +41,7 @@ dev = [
 where = ["src"]
 
 [tool.pytest.ini_options]
-addopts = "-ra -q"
+addopts = "-ra -q --cov=src --cov-report=term-missing --cov-fail-under=31"
 testpaths = [
     "tests",
 ]
@@ -53,8 +54,8 @@ line-length = 120
 target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "F", "B", "I"]
-ignore = ["E402", "E501", "B026"]
+select = ["E", "F", "B", "I", "N"]
+ignore = ["E402", "E501", "B026", "N802", "N803", "N806", "N815", "N816", "N999"]
 
 [tool.pyright]
 include = ["src"]
@@ -70,6 +71,7 @@ isolated_build = True
 [testenv]
 deps =
     pytest
+    pytest-cov
     sqlalchemy
     twisted
     pyserial

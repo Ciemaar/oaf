@@ -61,6 +61,8 @@ To run it, ensure `wxpython` is installed, then run:
 python -m desktopSLED
 ```
 
+*(Note: desktopSLED relies on the `src/desktopSLED` module being in your python path. Running it via `python -m desktopSLED` from the root of the repo with the package installed in editable mode is recommended).*
+
 ### Configuration
 
 1. Right-click the tray icon and select **Config**.
