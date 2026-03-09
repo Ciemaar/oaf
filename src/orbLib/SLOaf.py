@@ -54,7 +54,7 @@ class SLNotifier(OaF.Notifier):
               OaF.BLUE: "<0,0,1>", OaF.WHITE: "<1,1,1>", OaF.VIOLET: "<1,0,1>"}
 
     def render_GET(self, request):
-        if (request.getHeader("SLAvatar-Agent")[0:15] == "Second Life LSL"):
+        if (request.getHeader("User-Agent")[0:15] == "Second Life LSL"):
             print "Got SL Request"
             self.SLOrbID = request.getHeader("HTTP_X_SecondLife_Object_Key")
             if (request.args.has_key("channel")):
