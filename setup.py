@@ -8,5 +8,8 @@ setup(
     license='Pending',
     author='Andy Fundinger',
     author_email='Andy@ciemaar.com',
-    description='twisted based monitoring framework.', requires=['sqlalchemy', 'wx', 'PySerial']
+    description='twisted based monitoring framework.', requires=[
+        'sqlalchemy', 'wx', 'PySerial','twisted'],
+    test_depends=['pytest'],
+
 )

@@ -13,9 +13,10 @@ root = resource.Resource()
 # root.putChild('',HomePage())
 oafRoot = OaF.OafServer(None)
 
-slIndyMonitor = OaF.System("SL Indy")
+oafRoot.putSystem("BasicSystem", OaF.System("Basic System"))
+oafRoot.putNotifier("BasicNotifier", OaF.Notifier("Basic Notifier"))
+oafRoot.putNotifier("JsonNotifier", OaF.JsonNotifier("Json Notifier"))
 
-oafRoot.putSystem("SLIndyMonitor", slIndyMonitor)
 oafRoot.putSystem("RedBlackTest", OaF.GoalSystem("RedBlackTest", 500))
 oafRoot.putSystem("IMAPtest", MailOaf.IMAPMailMonitor(MAIL_SERVER, MAIL_USER,
                                                       MAIL_PASSWORD))

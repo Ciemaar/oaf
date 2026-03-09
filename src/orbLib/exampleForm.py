@@ -1,8 +1,10 @@
-from twisted.web import server, resource
 from twisted.internet import reactor
+from twisted.web import server, resource
+
 
 class Simple(resource.Resource):
     isLeaf = True
+
     def render(self, request):
         """
         request.args.get('key', '') gets the forms values.  This
@@ -26,11 +28,11 @@ class Simple(resource.Resource):
         html += "<br>uri = %s<br>" % request.uri
         html += "<br>method = %s<br>" % request.method
         html += "<br>path = %s<br>" % request.path
-        
+
         field_value = request.args.get('Field', '')
         html += "<br>Field = %s<br>" % field_value
         html += "<br>ClientIP = %s<br>" % IP
-        button_val = request.args.get('name_submit','')    
+        button_val = request.args.get('name_submit', '')
         html += "<br>button_val = %s<br>" % button_val
         form = """
         <FORM ACTION="." METHOD="POST" ENCTYPE="application/x-www-form-urlencoded">
@@ -40,7 +42,8 @@ class Simple(resource.Resource):
         """
         return html + form
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     site = server.Site(Simple())
     reactor.listenTCP(8000, site)
     reactor.run()
