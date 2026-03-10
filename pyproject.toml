@@ -32,6 +32,7 @@ dev = [
     "tox>=4.0",
     "pyright>=1.1.0",
     "mdformat>=0.7.0",
+    "codespell>=2.2.0",
 ]
 
 [project.urls]
@@ -82,11 +83,13 @@ commands =
 deps =
     ruff
     mdformat
+    codespell
 skip_install = true
 commands =
     ruff check src tests
     ruff format --check src tests
     mdformat --check README.md .github/copilot-instructions.md docs/
+    codespell docs/ README.md .github/
 
 [testenv:format]
 deps =
