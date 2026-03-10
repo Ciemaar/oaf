@@ -139,9 +139,9 @@ class OafServer(resource.Resource):
             getWebColor(self.color),
         )
         currState = """ status: %s system: %s message: %s <br/>color: %s blink: %d<br/>OAF Server Page""" % (
-            self.status,
-            self.systemName,
-            self.message,
+            html.escape(self.status),
+            html.escape(self.systemName),
+            html.escape(self.message),
             str(self.color),
             self.blink,
         )
@@ -497,19 +497,20 @@ class GoalNetworkSystem(GoalSystem):
             getWebColor(self.color),
         )
         currState = """ status: %s system: %s message: %s <br/>color: %s blink: %d<br/>OAF Server Page""" % (
-            self.status,
-            self.systemName,
-            self.message,
+            html.escape(self.status),
+            html.escape(self.systemName),
+            html.escape(self.message),
             str(self.color),
             self.blink,
         )
         systemTable = "<table>"
         for path, currSystem in list(self.children.items()):
+            path_str = path.decode("utf-8") if isinstance(path, bytes) else path
             systemTable += (
                 """<tr bgcolor="white"><td><a href="%s/%s">%s</a></td><td bgcolor="%s">%s</td><td>%s</td><td>%s</td></tr>"""
                 % (
                     request.uri.decode("utf-8"),
-                    html.escape(path),
+                    html.escape(path_str),
                     html.escape(currSystem.systemName),
                     getWebColor(currSystem.color),
                     html.escape(currSystem.status),

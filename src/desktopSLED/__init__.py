@@ -31,7 +31,7 @@ def main():
     # oafRoot.putSystem("WilhelmPickle", OaF.PickledSystem("http://localhost8000/oaf/pickle",oafRoot))
     # orbRoot.putNotifier("sled", SerialIndyNotifier(sys.argv[1]))
 
-    root.putChild("sled", oafRoot)
+    root.putChild(b"sled", oafRoot)
 
     site = server.Site(root)
 

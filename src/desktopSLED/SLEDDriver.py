@@ -13,7 +13,7 @@ if __name__ == "__main__":
 
     oafRoot = OaF.OafServer(None)
 
-    root.putChild("sled", oafRoot)
+    root.putChild(b"sled", oafRoot)
 
     site = twisted.web.server.Site(root)
 

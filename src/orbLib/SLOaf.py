@@ -115,7 +115,7 @@ class SLNotifier(OaF.Notifier):
 class PrimarySLNotifier(SLNotifier):
     def _SLCSV(self):
         if hasattr(self, "oaf") and self.oaf.needsConfig:
-            return SLNotifier._SLCSV(self) + "\nNeeds Config"
+            return SLNotifier._SLCSV(self) + b"\nNeeds Config"
         return SLNotifier._SLCSV(self)
 
     def render_POST(self, request):
