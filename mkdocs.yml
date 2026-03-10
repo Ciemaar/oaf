@@ -8,6 +8,7 @@ nav:
   - Home: index.md
   - User Guide: user_guide.md
   - Developer Guide: developer_guide.md
+  - Twisted Async Evolution: twisted_async_evolution.md
   - Tooling Evaluation: tooling_evaluation.md
 plugins:
   - search
