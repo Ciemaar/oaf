@@ -10,10 +10,9 @@ readme = "README.md"
 authors = [
   { name="Andy Fundinger", email="Andy@ciemaar.com" },
 ]
-license = { text = "Pending" }
+license = "MIT"
 classifiers = [
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
 dependencies = [
@@ -93,8 +92,8 @@ deps = [
 commands = [
     ["ruff", "check", "src", "tests"],
     ["ruff", "format", "--check", "src", "tests"],
-    ["mdformat", "--check", "README.md", ".github/copilot-instructions.md", "docs/"],
-    ["codespell", "docs/", "README.md", ".github/"]
+    ["mdformat", "--check", "README.md", "prompt_history_instructions.md", ".github/copilot-instructions.md", "docs/"],
+    ["codespell", "docs/", "README.md", "prompt_history_instructions.md", ".github/"]
 ]
 
 [tool.tox.env.format]
@@ -106,7 +105,7 @@ deps = [
 ]
 commands = [
     ["ruff", "format", "src", "tests"],
-    ["mdformat", "README.md", ".github/copilot-instructions.md", "docs/"]
+    ["mdformat", "README.md", "prompt_history_instructions.md", ".github/copilot-instructions.md", "docs/"]
 ]
 
 [tool.tox.env.typecheck]
