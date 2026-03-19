@@ -1,4 +1,4 @@
-import pickle
+import json
 
 import wx
 
@@ -58,7 +58,8 @@ class ConfigWindow(wx.Frame):
 
     def makeFieldSection(self, fieldNames):
         try:
-            pkl = pickle.Unpickler(open(self.pklFilename, "rb")).load()
+            with open(self.pklFilename, "r", encoding="utf-8") as f:
+                pkl = json.load(f)
         except Exception:
             pkl = {"port": "", "oaf": ""}
         panel = wx.ScrolledWindow(self, style=wx.TAB_TRAVERSAL)
@@ -104,4 +105,5 @@ class ConfigWindow(wx.Frame):
         except Exception:
             self.oafRoot.putNotifier("sled", None)
         pkl = {"oaf": oafUrl, "port": sledPort}
-        pickle.Pickler(open(self.pklFilename, "wb")).dump(pkl)
+        with open(self.pklFilename, "w", encoding="utf-8") as f:
+            json.dump(pkl, f)

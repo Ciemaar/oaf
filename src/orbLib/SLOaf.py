@@ -27,7 +27,7 @@ class SLNotifier(OaF.Notifier):
     async def _callRemote(self, method, *args):
         payload = xmlrpclib.dumps(args, methodname=method).encode("utf-8")
         body = FileBodyProducer(BytesIO(payload))
-        headers = Headers({"Content-Type": ["text/xml"]})
+        headers = Headers({b"Content-Type": [b"text/xml"]})
 
         try:
             response = await self.agent.request(b"POST", self.rpc_url, headers, body)

@@ -65,7 +65,7 @@ pythonVersion = "3.10"
 typeCheckingMode = "basic"
 
 [tool.tox]
-envlist = ["py310", "py311", "py312", "py313", "lint", "typecheck"]
+envlist = ["py310", "py311", "py312", "py313", "py314", "lint", "typecheck"]
 isolated_build = true
 
 [tool.tox.env_run_base]
