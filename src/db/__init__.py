@@ -111,7 +111,7 @@ if __name__ == "__main__":
     Base.metadata.create_all(engine)
 
     with Session() as session:
-        apf = Oaf("Andy Fundinger")
+        apf = Oaf("Example User")
         # apf.pagemonitors.append(PageMonitor("http://216.254.64.114:8813/factory","Gerri Lit"))
         apf.pagemonitors.append(PageMonitor("http://localhost:8813/bookstore/Wilson", "Wilhelm Lit"))
         apf.pagemonitors.append(PageMonitor("http://localhost:8956/systems/rocketLaunch", "Daes dae'mar"))

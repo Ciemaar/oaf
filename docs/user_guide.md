@@ -28,7 +28,7 @@ OAF requires Python 3.10 or higher.
 pip install .
 ```
 
-*(Note: If you intend to use the desktop tray application `desktopSLED`, you will also need to install `wxpython`.)*
+*(Note: If you intend to use the desktop tray application `desktopSLED`, you can install it with the `SLED` extra: `pip install .[SLED]`)*
 
 ## Running the Main Server
 
