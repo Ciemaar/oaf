@@ -24,7 +24,7 @@ As part of the modernization of the Orb Aggregation Framework (OAF), we evaluate
 - **Evaluation:**
   - `pytest` is the undisputed standard for Python testing. We successfully migrated legacy `twisted.trial` tests to run under `pytest`, allowing us to use `pytest-cov` to enforce a strict minimum test coverage baseline (`--cov-fail-under`).
   - `tox` is a virtual environment management and test command line tool.
-- **Suitability for OAF:** Excellent. `tox` handles the matrix testing (`py310`, `py311`, `py312`, `py313`) and orchestrates our linting and formatting environments effortlessly.
+- **Suitability for OAF:** Excellent. `tox` handles the matrix testing (`py310`, `py311`, `py312`, `py313`, `py314`) and orchestrates our linting and formatting environments effortlessly.
 - **Alternatives Considered:** `nox`. `nox` uses Python scripts instead of `.ini` syntax for configuration. While powerful, `tox`'s legacy `.ini` format within `pyproject.toml` is concise and perfectly adequate for our needs.
 
 ## Documentation
