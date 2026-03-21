@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "**" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "**" ]
 
 jobs:
   test:
@@ -52,4 +52,4 @@ jobs:
 
     - name: Check Markdown formatting
       run: |
-        mdformat --check README.md .github/copilot-instructions.md docs/
+        mdformat --check README.md prompt_history_instructions.md .github/copilot-instructions.md docs/
