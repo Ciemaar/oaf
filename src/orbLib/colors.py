@@ -18,7 +18,7 @@ WHITE = (1, 1, 1)
 
 def getWebColor(rgb_tuple):
     # http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/266466
-    """ convert an (R, G, B) tuple to #RRGGBB """
-    hexcolor = '#%02x%02x%02x' % tuple([255 * x for x in rgb_tuple])
+    """convert an (R, G, B) tuple to #RRGGBB"""
+    hexcolor = "#%02x%02x%02x" % tuple([255 * x for x in rgb_tuple])
     # that's it! '%02x' means zero-padded, 2-digit hex values
     return hexcolor

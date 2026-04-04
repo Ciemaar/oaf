@@ -1,5 +1,5 @@
 from twisted.internet import reactor
-from twisted.web import server, resource
+from twisted.web import resource, server
 
 
 class Simple(resource.Resource):
@@ -16,23 +16,23 @@ class Simple(resource.Resource):
         I have a textfield called "Field" as you see in the HTML below.
 
         when submitting,  this just loops back to this code,  extracts
-        the forms values,  then re-renders the forms page in html before 
+        the forms values,  then re-renders the forms page in html before
         it exits and loops back again.
         """
         IP = request.getClientIP()
         html = ""
         html += "<html>Hello, world!</html><br><br>"
         html += "Keys are...<br>"
-        for key in request.args.keys():
+        for key in list(request.args.keys()):
             html += "%s " % key
         html += "<br>uri = %s<br>" % request.uri
         html += "<br>method = %s<br>" % request.method
         html += "<br>path = %s<br>" % request.path
 
-        field_value = request.args.get('Field', '')
+        field_value = request.args.get("Field", "")
         html += "<br>Field = %s<br>" % field_value
         html += "<br>ClientIP = %s<br>" % IP
-        button_val = request.args.get('name_submit', '')
+        button_val = request.args.get("name_submit", "")
         html += "<br>button_val = %s<br>" % button_val
         form = """
         <FORM ACTION="." METHOD="POST" ENCTYPE="application/x-www-form-urlencoded">
