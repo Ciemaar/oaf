@@ -14,8 +14,15 @@ from orbLib import OaF
 def running_port():
     port = "8901"
     env = dict(os.environ)
-    env["PYTHONPATH"] = env.get("PYTHONPATH", "") + ":src"
-    proc = subprocess.Popen(["python", "./tests/TestService.py", port], env=env)
+
+    # Ensure correct paths relative to this test file
+    test_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(test_dir)
+
+    env["PYTHONPATH"] = env.get("PYTHONPATH", "") + ":" + os.path.join(project_root, "src")
+    test_service_path = os.path.join(test_dir, "TestService.py")
+
+    proc = subprocess.Popen(["python", test_service_path, port], env=env)
     sleep(3)  # Sleep to allow startup
     yield port
     proc.terminate()
