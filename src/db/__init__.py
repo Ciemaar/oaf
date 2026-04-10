@@ -59,6 +59,8 @@ class PageMonitor(DBBase):
         return self.url
 
     def getSystem(self):
+        # We use an inline import here to avoid circular dependency issues,
+        # as SLOaf depends on components that might in turn depend on db
         from orbLib import SLOaf
 
         return SLOaf.PageMonitor(self.url)
@@ -81,6 +83,8 @@ class Oaf(DBBase):
             self.AVUUID = avuuid
 
     def getOaf(self):
+        # We use an inline import here to avoid circular dependency issues,
+        # as SLOaf depends on components that might in turn depend on db
         from orbLib import SLOaf
 
         return SLOaf.BoundSLOafServer(self)
@@ -100,6 +104,8 @@ class SLAvatar(DBBase):
         self.avuuid = avuuid
 
     def getServer(self):
+        # We use an inline import here to avoid circular dependency issues,
+        # as SLOaf depends on components that might in turn depend on db
         from orbLib import SLOaf
 
         return SLOaf.SLOafServer(self.id)
