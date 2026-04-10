@@ -120,6 +120,8 @@ class MyMonitor(System):
         ensureDeferred(_do_check())
 ```
 
+Note: While older Twisted patterns like `@inlineCallbacks` were decorators, `ensureDeferred` is generally *not* used as a decorator directly on a class method or standard function if that function is expected to return immediately without blocking (like a scheduled reactor callback). `ensureDeferred` immediately executes the coroutine and returns a `Deferred`, meaning if you use it as a decorator, it changes the function's signature and immediate return behavior. The standard pattern is to define the `async def` function (often nested, or as a private method) and then explicitly call `ensureDeferred(my_async_func())` inside the synchronous caller.
+
 ## Summary
 
 - **Then:** Twisted used explicit `Deferred` objects and `.addCallback()` chains. It was powerful but could be hard to read.

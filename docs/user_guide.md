@@ -55,7 +55,7 @@ python -m orbLib.main 8080
 
 `desktopSLED` is a companion application that puts a small icon in your system tray, reflecting the current status of your OAF server.
 
-To run it, ensure `wxpython` is installed, then run:
+To run it, ensure `wxpython` is installed (which can be done via the optional `[SLED]` dependency extra: `pip install .[SLED]`), then run:
 
 ```bash
 python -m desktopSLED
