@@ -23,7 +23,7 @@ class Simple(resource.Resource):
         html = ""
         html += "<html>Hello, world!</html><br><br>"
         html += "Keys are...<br>"
-        for key in list(request.args.keys()):
+        for key in request.args.keys():
             html += "%s " % key
         html += "<br>uri = %s<br>" % request.uri
         html += "<br>method = %s<br>" % request.method
