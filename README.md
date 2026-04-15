@@ -31,3 +31,18 @@ key inputs to it.
   - SubServers allow the summarization logic to be applied hierarchically,
     serving as servers and systems and thereby supporting notifications for
     designated areas.
+
+## Testing and Development
+
+We use `pytest` and `tox` for testing and verifying the codebase. To install testing dependencies and run the tests:
+
+```bash
+# Install development dependencies
+pip install .[dev]
+
+# Run the test suite via pytest
+pytest tests
+
+# Run all automated checks (tests, linters, formatters) via tox
+tox
+```
