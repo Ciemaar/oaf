@@ -1,10 +1,11 @@
-import cPickle
+import json
 
 import wx
 
-from ids import *
 from orbLib import OaF
 from orbLib.SerialIndy import SerialIndyNotifier
+
+from .ids import ID_ABOUT, ID_CLOSE, ID_FIELD1, ID_OPEN_PORT
 
 
 class ConfigWindow(wx.Frame):
@@ -22,12 +23,11 @@ class ConfigWindow(wx.Frame):
         filemenu.Append(ID_CLOSE, "E&xit", " Terminate the program")
         # Creating the menubar.
         menuBar = wx.MenuBar()
-        menuBar.Append(filemenu,
-                       "&File")  # Adding the "filemenu" to the MenuBar
+        menuBar.Append(filemenu, "&File")  # Adding the "filemenu" to the MenuBar
         self.SetMenuBar(menuBar)  # Adding the MenuBar to the Frame content.
 
-        wx.EVT_MENU(self, ID_ABOUT, self.onAbout)
-        wx.EVT_MENU(self, ID_CLOSE, self.onExit)
+        self.Bind(wx.EVT_MENU, self.onAbout, id=ID_ABOUT)
+        self.Bind(wx.EVT_MENU, self.onExit, id=ID_CLOSE)
 
         self.sizer2 = wx.BoxSizer(wx.HORIZONTAL)
         self.buttons = []
@@ -42,7 +42,7 @@ class ConfigWindow(wx.Frame):
         for id, label, eventHandler in buttonLabels:
             newButton = wx.Button(self, id, label)
             self.sizer2.Add(newButton, 1, wx.EXPAND)
-            wx.EVT_BUTTON(self, id, eventHandler)
+            self.Bind(wx.EVT_BUTTON, eventHandler, id=id)
             # Use some sizers to see layout options
         self.sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -58,25 +58,21 @@ class ConfigWindow(wx.Frame):
 
     def makeFieldSection(self, fieldNames):
         try:
-            pkl = cPickle.Unpickler(open(self.pklFilename, 'r')).load()
-        except:
+            with open(self.pklFilename, "r", encoding="utf-8") as f:
+                pkl = json.load(f)
+        except Exception:
             pkl = {"port": "", "oaf": ""}
         panel = wx.ScrolledWindow(self, style=wx.TAB_TRAVERSAL)
         section = wx.FlexGridSizer(0, 1, 2, 2)
 
-        label = wx.StaticText(panel, ID_FIELD1 + 1,
-                              "Serial Port")  # ,size=(200,-1))
-        self.serialPortField = wx.TextCtrl(panel, ID_FIELD1, size=(200, 20),
-                                           name="Serial Port",
-                                           value=pkl["port"])
+        label = wx.StaticText(panel, ID_FIELD1 + 1, "Serial Port")  # ,size=(200,-1))
+        self.serialPortField = wx.TextCtrl(panel, ID_FIELD1, size=(200, 20), name="Serial Port", value=pkl["port"])
 
         section.Add(label)
         section.Add(self.serialPortField)
 
-        label2 = wx.StaticText(panel, ID_FIELD1 + 3,
-                               "Oaf")  # ,size=(200,-1))
-        self.oafField = wx.TextCtrl(panel, ID_FIELD1 + 2, size=(200, 20),
-                                    name="OAF", value=pkl["oaf"])
+        label2 = wx.StaticText(panel, ID_FIELD1 + 3, "Oaf")  # ,size=(200,-1))
+        self.oafField = wx.TextCtrl(panel, ID_FIELD1 + 2, size=(200, 20), name="OAF", value=pkl["oaf"])
 
         section.Add(label2)
         section.Add(self.oafField)
@@ -88,7 +84,7 @@ class ConfigWindow(wx.Frame):
 
         panel.Layout()
         panel.Fit()
-        return (panel)
+        return panel
 
     def onAbout(self, e):
         d = wx.MessageDialog(self, " SLED Driver", "About SLED Driver", wx.OK)
@@ -103,12 +99,11 @@ class ConfigWindow(wx.Frame):
         # oafRoot.putSystem("WilhelmPickle", OaF.PickledSystem("http://localhost:8000/oaf/pickle",oafRoot))
         oafUrl = self.oafField.GetValue()
         sledPort = self.serialPortField.GetValue()
-        self.oafRoot.putSystem("ConfigedPickle",
-                               OaF.PickledSystem(oafUrl + "/pickle",
-                                                 self.oafRoot))
+        self.oafRoot.putSystem("ConfigedPickle", OaF.PickledSystem(oafUrl + "/pickle", self.oafRoot))
         try:
             self.oafRoot.putNotifier("sled", SerialIndyNotifier(sledPort))
-        except:
+        except Exception:
             self.oafRoot.putNotifier("sled", None)
         pkl = {"oaf": oafUrl, "port": sledPort}
-        cPickle.Pickler(open(self.pklFilename, "w")).dump(pkl)
+        with open(self.pklFilename, "w", encoding="utf-8") as f:
+            json.dump(pkl, f)

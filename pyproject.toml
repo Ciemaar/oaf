@@ -1,0 +1,119 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orbLib"
+version = "0.0.1"
+description = "Twisted based monitoring framework."
+readme = "README.md"
+authors = [
+  { name="Andy Fundinger", email="Andy@ciemaar.com" },
+]
+license = "MIT"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "sqlalchemy>=2.0",
+    "twisted>=22.10.0",
+    # "wxpython>=4.2.0",  # Commented out due to build complexity in sandbox; re-enable if needed or for desktopSLED work
+    "pyserial>=3.5",
+]
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+SLED = [
+    "wxpython>=4.2.0",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1.0",
+    "tox>=4.0",
+    "pyright>=1.1.0",
+    "mdformat>=0.7.0",
+    "codespell>=2.2.0",
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.4.0",
+]
+
+[project.urls]
+"Homepage" = "https://channel3b.wordpress.com/orbLib"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-ra -q --cov=src --cov-report=term-missing --cov-fail-under=31"
+testpaths = [
+    "tests",
+]
+pythonpath = [
+    "src"
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I", "N"]
+ignore = ["E402", "E501", "B026", "N802", "N803", "N806", "N815", "N816", "N999"]
+
+[tool.pyright]
+include = ["src"]
+pythonVersion = "3.10"
+typeCheckingMode = "basic"
+
+[tool.tox]
+envlist = ["py310", "py311", "py312", "py313", "py314", "lint", "typecheck"]
+isolated_build = true
+
+[tool.tox.env_run_base]
+description = "Run tests under {base_python}"
+deps = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "sqlalchemy>=2.0",
+    "twisted>=22.10.0",
+    "pyserial>=3.5"
+]
+commands = [
+    ["pytest", "{posargs:tests}"]
+]
+
+[tool.tox.env.lint]
+description = "Run linters"
+skip_install = true
+deps = [
+    "ruff>=0.1.0",
+    "mdformat>=0.7.0",
+    "codespell>=2.2.0"
+]
+commands = [
+    ["ruff", "check", "src", "tests"],
+    ["ruff", "format", "--check", "src", "tests"],
+    ["mdformat", "--check", "README.md", "prompt_history_instructions.md", ".github/copilot-instructions.md", "docs/"],
+    ["codespell", "docs/", "README.md", "prompt_history_instructions.md", ".github/"]
+]
+
+[tool.tox.env.format]
+description = "Run formatters"
+skip_install = true
+deps = [
+    "ruff>=0.1.0",
+    "mdformat>=0.7.0"
+]
+commands = [
+    ["ruff", "format", "src", "tests"],
+    ["mdformat", "README.md", "prompt_history_instructions.md", ".github/copilot-instructions.md", "docs/"]
+]
+
+[tool.tox.env.typecheck]
+description = "Run type checks"
+deps = ["pyright>=1.1.0"]
+commands = [
+    ["pyright"]
+]

@@ -1,8 +1,10 @@
+import twisted.internet
 import twisted.web
 from twisted.internet.error import CannotListenError
 
-from __init__ import SledApp
 from orbLib import OaF
+
+from .__init__ import SledApp
 
 if __name__ == "__main__":
     import twisted.internet
@@ -11,21 +13,21 @@ if __name__ == "__main__":
 
     oafRoot = OaF.OafServer(None)
 
-    root.putChild("sled", oafRoot)
+    root.putChild(b"sled", oafRoot)
 
     site = twisted.web.server.Site(root)
 
     sledApp = SledApp(oafRoot)
 
-    print "Starting main loop"
+    print("Starting main loop")
     huntingPort = True
     port = 80000
-    while (huntingPort):
+    while huntingPort:
         try:
             twisted.internet.reactor.listenTCP(port, site)
             huntingPort = False
         except CannotListenError:
             port += 1
-    print "Web Interface at http://localhost:%d/sled" % port
+    print("Web Interface at http://localhost:%d/sled" % port)
     twisted.internet.reactor.registerWxApp(sledApp)
     twisted.internet.reactor.run()
