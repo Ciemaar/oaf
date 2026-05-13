@@ -22,7 +22,10 @@ The system is built on Twisted. While significant modernization has already take
 
 The backend storage currently utilizes SQLAlchemy 2.0 with SQLite locally.
 
+- **Secrets Management:** Ensure that hardcoded variables such as `MAIL_SERVER`, `MAIL_USER`, and `MAIL_PASSWORD` are moved out of repository scripts like `src/orbLib/main.py`. This configuration should be passed securely via environment variables or a dedicated secrets manager.
+
 - **Time-Series Metrics:** The current model logs history arrays. Expanding the system to support dumping metrics to a time-series database (e.g., InfluxDB, Prometheus) would allow for robust dashboarding using tools like Grafana.
+
 - **Database Migrations:** Introduce Alembic for database migrations as the data models evolve.
 
 ## 4. User Interface

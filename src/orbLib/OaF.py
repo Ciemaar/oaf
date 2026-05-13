@@ -1,6 +1,6 @@
 import colorsys
 import html
-import marshal
+import json
 import sys
 import time
 from urllib.parse import urlencode
@@ -134,8 +134,8 @@ class OafServer(resource.Resource):
     def render_GET(self, request):
         # print "called render"
         head = """<html><head><title>OAF status: %s system: %s</title></head><body bgcolor="%s">""" % (
-            self.status,
-            self.systemName,
+            html.escape(str(self.status)),
+            html.escape(str(self.systemName)),
             getWebColor(self.color),
         )
         currState = """ status: %s system: %s message: %s <br/>color: %s blink: %d<br/>OAF Server Page""" % (
@@ -284,9 +284,6 @@ class Notifier(resource.Resource):
         self.status = status
 
 
-import json
-
-
 class JsonNotifier(Notifier):
     def render_GET(self, request):
         return json.dumps(
@@ -339,7 +336,7 @@ class PickleNotifier(resource.Resource):
         # print "set state"+str(self.state)
 
     def render_GET(self, request):
-        return marshal.dumps(self.state)
+        return json.dumps(self.state).encode("utf-8")
 
 
 class SubServer(OafServer):
@@ -492,8 +489,8 @@ class GoalNetworkSystem(GoalSystem):
     def render_GET(self, request):
         # print "called render"
         head = """<html><head><title>OAF status: %s system: %s</title></head><body bgcolor="%s">""" % (
-            self.status,
-            self.systemName,
+            html.escape(str(self.status)),
+            html.escape(str(self.systemName)),
             getWebColor(self.color),
         )
         currState = """ status: %s system: %s message: %s <br/>color: %s blink: %d<br/>OAF Server Page""" % (
@@ -691,7 +688,7 @@ class PickledSystem(PageMonitor):
         # a PickledSystem uses the PageMonitor
         # mechanism to retry only on failure.
         try:
-            self.remoteStatus = marshal.loads(data)  # print self.remoteStatus
+            self.remoteStatus = json.loads(data.decode("utf-8"))  # print self.remoteStatus
             if (
                 (self.color == self.remoteStatus["color"])
                 and (self.message == self.remoteStatus["message"])
