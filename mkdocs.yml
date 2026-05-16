@@ -11,5 +11,6 @@ nav:
   - Twisted Async Evolution: twisted_async_evolution.md
   - Tooling Evaluation: tooling_evaluation.md
   - Future Features: future_features.md
+  - Assumptions: assumptions.md
 plugins:
   - search
