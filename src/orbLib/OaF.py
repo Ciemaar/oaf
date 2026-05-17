@@ -70,7 +70,7 @@ class System(resource.Resource):
             """<html><body bgcolor="%s">OAF System:""" % getWebColor(self.color)
             + historyTable
             + html.escape(self.systemName)
-            + self.form % request.uri.decode("utf-8")
+            + self.form % html.escape(request.uri.decode("utf-8"))
             + """<a href=".">parent oaf</a></body></html>"""
         ).encode("utf-8")
 
