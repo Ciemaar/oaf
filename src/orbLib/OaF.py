@@ -1,15 +1,31 @@
+import colorsys
+import html
 import json
-import marshal
 import sys
 import time
+from urllib.parse import urlencode
 
 from twisted.internet import reactor, task
-from twisted.web import resource, server, client, error
+from twisted.web import error, resource, server
+from twisted.web.client import Agent, readBody
 
-import exampleForm
-from colors import *
+
+async def get_page(url):
+    agent = Agent(reactor)
+    if isinstance(url, str):
+        url = url.encode("utf-8")
+
+    response = await agent.request(b"GET", url)
+    if isinstance(response.code, int) and response.code >= 400:  # type: ignore
+        raise error.Error(str(response.code), response.phrase, None)  # type: ignore
+    return await readBody(response)
+
 
 NONE = 0
+
+from . import exampleForm
+from .colors import BLUE, GREEN, RED, VIOLET, WHITE, getWebColor
+
 DEFAULT = 1
 INFO = 2
 WARNING = 3
@@ -17,71 +33,56 @@ ALERT = 4
 CRITICAL = 5
 
 
-class System(resource.Resource, object):
-    ''' Systems - Systems represent an input point, something in the real or virtual
-world has developed a status and would like to communicate it to you.  They
-provide a simple end-point and get/post inferface to accept data.  Systems have
- a few basic properties:
-  - status - a one word description of the status of the reporting state
-  commonly something from ['none', 'ok', 'working', 'success', 'warning',
-  'error']
-  - message - A free-form description of the status
-  - color - the color that this system matches to the given status as a rgb
-  tuple
-  - blink - a blink speed from 0-7
-  - level - how importantant this status is compared to other statuses that
-  this system might have
-
-  This is a base class, implementing only the functionality to set a
-  status and ack it, which reduces it's level to NONE pending the next status
-  change.
-  '''
-    statusList = {"none": (NONE, WHITE, 0), "ok": (DEFAULT, GREEN, 0),
-                  "working": (INFO, BLUE, 5),
-                  "success": (INFO, GREEN, 0), "failure": (WARNING, RED, 0),
-                  "error": (ALERT, RED, 7)}
+class System(resource.Resource):
+    statusList = {
+        "none": (NONE, WHITE, 0),
+        "ok": (DEFAULT, GREEN, 0),
+        "working": (INFO, BLUE, 5),
+        "success": (INFO, GREEN, 0),
+        "failure": (WARNING, RED, 0),
+        "error": (ALERT, RED, 7),
+    }
 
     def render_POST(self, request):
-        '''Check for an ack input then render as a get.'''
-        if (request.args.has_key('ack')):
+        if b"ack" in request.args:
             self.level = NONE
-            self.oaf.statusChange(self)
+            self.oaf.statusChange(self)  # type: ignore
         return self.render_GET(request)
 
     def render_GET(self, request):
-        ##TODO: setting status from a GET should be optional, default off
-        if (request.args.has_key('status') and (
-                request.args['status'][0] != '')):
-            if ((request.args.has_key('message')) and (
-                    request.args['message'][0] != '')):
-                self.message = request.args['message'][0]
+        if b"status" in request.args and (request.args[b"status"][0] != b""):
+            if (b"message" in request.args) and (request.args[b"message"][0] != b""):
+                self.message = request.args[b"message"][0].decode("utf-8")
             else:
                 self.message = self.systemName
-            self.status = request.args['status'][0]
+            self.status = request.args[b"status"][0].decode("utf-8")
 
-        historyTable = '<table>'
+        historyTable = "<table>"
         for line in self.history:
-            historyTable += '<tr><td>%s</td><td>%s</td><td>%s</td></tr>' % (
-            line[0], line[1], time.strftime("%a %d %b %Y %H:%M:%S", line[2]))
-        historyTable += '</table>'
+            historyTable += "<tr><td>%s</td><td>%s</td><td>%s</td></tr>" % (
+                html.escape(str(line[0])),
+                html.escape(str(line[1])),
+                time.strftime("%a %d %b %Y %H:%M:%S", line[2]),
+            )
+        historyTable += "</table>"
 
-        return str("""<html><body bgcolor="%s">OAF System:""" % getWebColor(
-            self.color) \
-                   + historyTable + self.systemName + self.form % request.uri + """<a href=".">parent oaf</a></body></html>""")
+        return (
+            """<html><body bgcolor="%s">OAF System:""" % getWebColor(self.color)
+            + historyTable
+            + html.escape(self.systemName)
+            + self.form % html.escape(request.uri.decode("utf-8"))
+            + """<a href=".">parent oaf</a></body></html>"""
+        ).encode("utf-8")
 
     #        return ("""<html><body bgcolor="%s">OAF System:"""%getWebColor(self.color) \
     #                +historyTable+self.systemName+self.form%request.uri+"""<a href=".">parent oaf</a></body></html>""").encode('utf-8')
-
     def setStatus(self, value):
-        '''This setter simplifies interpretting a status to a single string
-        found in the statusList.'''
         self.statusTime = time.localtime()
-        self.history = [(value, self.message, self.statusTime)] + self.history[
-                                                                  0:12]
+        self.history = [(value, self.message, self.statusTime)] + self.history[0:12]
 
         # Keeps the Acknowledgement until status changes, resetting
         # the level to the new status
-        if (value == self._status):
+        if value == self._status:
             return
 
         settings = self.statusList.get(value, (NONE, WHITE, 0))
@@ -89,40 +90,39 @@ provide a simple end-point and get/post inferface to accept data.  Systems have
         self.color = settings[1]
         self.blink = settings[2]
         self._status = value
-        if (hasattr(self, "oaf")):
-            self.oaf.statusChange(self)
+        if hasattr(self, "oaf"):
+            self.oaf.statusChange(self)  # type: ignore
 
     def getStatus(self):
         return self._status
 
-    ## TODO:  use @property instead
     status = property(getStatus, setStatus, doc="System Status")
 
     def __init__(self, systemName):
-        resource.Resource.__init__(self)  ## TODO:  switch to super()
+        resource.Resource.__init__(self)
         self.history = []
-        ## TODO: Switch to .format() or another more modern templating style
         self._formHeader = """
         <form ACTION="%s" METHOD="POST" ENCTYPE="application/x-www-form-urlencoded">
                  <input TYPE="SUBMIT" NAME="ack" VALUE="Acknowledge">
                  """
         self._formBody = """Status: <select NAME="status"><option></option>"""
-        for status in self.statusList.keys():
-            self._formBody += "<option>%s</option>" % status
-        self._formBody += """</select><BR>Message: <input TYPE="TEXT" NAME="message" SIZE="25">"""
+        for status in list(self.statusList.keys()):
+            self._formBody += "<option>%s</option>" % html.escape(status)
+        self._formBody += """</select><BR>
+Message: <input TYPE="TEXT" NAME="message" SIZE="25">"""
         self._formFooter = """<BR><input TYPE="SUBMIT" NAME="name_submit" VALUE="Submit">
         </FORM>
         """
         self.form = self._formHeader + self._formBody + self._formFooter
         self.message = systemName
-        print "initting " + systemName
-        self.systemName = systemName;
+        print("initting " + systemName)
+        self.systemName = systemName
 
         self._status = ""
         self.status = "none"
 
 
-class OafServer(object, resource.Resource):
+class OafServer(resource.Resource):
     def __init__(self, defaultSystemType=System):
         resource.Resource.__init__(self)
         self.systems = {}
@@ -134,58 +134,79 @@ class OafServer(object, resource.Resource):
     def render_GET(self, request):
         # print "called render"
         head = """<html><head><title>OAF status: %s system: %s</title></head><body bgcolor="%s">""" % (
-        self.status, self.systemName, getWebColor(self.color))
-        currState = """ status: %s system: %s message: %s <br/>color: %s blink: %d<br/>OAF Server Page""" % \
-                    (self.status, self.systemName, self.message,
-                     str(self.color), self.blink)
+            html.escape(str(self.status)),
+            html.escape(str(self.systemName)),
+            getWebColor(self.color),
+        )
+        currState = """ status: %s system: %s message: %s <br/>color: %s blink: %d<br/>OAF Server Page""" % (
+            html.escape(self.status),
+            html.escape(self.systemName),
+            html.escape(self.message),
+            str(self.color),
+            self.blink,
+        )
         systemTable = "<table>"
-        systemPaths = self.systems.keys()
+        systemPaths = list(self.systems.keys())
         systemPaths.sort()
         for path in systemPaths:
             currSystem = self.systems[path]
-            systemTable += """<tr bgcolor="white"><td><a href="%s/%s">%s</a></td><td bgcolor="%s">%s</td><td>%s</td><td>%s</td></tr>""" % (
-            request.uri, path, currSystem.systemName,
-            getWebColor(currSystem.color), currSystem.status,
-            currSystem.message,
-            time.strftime("%a %d %b %Y %H:%M:%S", currSystem.statusTime))
+            systemTable += (
+                """<tr bgcolor="white"><td><a href="%s/%s">%s</a></td><td bgcolor="%s">%s</td><td>%s</td><td>%s</td></tr>"""
+                % (
+                    request.uri.decode("utf-8"),
+                    html.escape(path),
+                    html.escape(currSystem.systemName),
+                    getWebColor(currSystem.color),
+                    html.escape(currSystem.status),
+                    html.escape(currSystem.message),
+                    time.strftime("%a %d %b %Y %H:%M:%S", currSystem.statusTime),
+                )
+            )
         systemTable += "</table>"
         foot = "</body></html>"
-        request.setHeader("Content-type", 'text/html; charset=UTF-8')
-        return (head + currState + systemTable + foot).encode('utf-8')
+        request.setHeader("Content-type", "text/html; charset=UTF-8")
+        return (head + currState + systemTable + foot).encode("utf-8")
 
     def putSystem(self, path, system):
         # print "adding "+str(system.__class__)
-        if (not hasattr(system, "oaf")):
+        if path in self.systems:
+            old_system = self.systems[path]
+            if hasattr(old_system, "stop"):
+                old_system.stop()
+        if not hasattr(system, "oaf"):
             system.oaf = self
         self.systems[path] = system
         self._statusChange(system)
-        self.putChild(path, system)
+        path_bytes = path.encode("utf-8") if isinstance(path, str) else path
+        self.putChild(path_bytes, system)
 
     def removeSystem(self, path):
         system = self.systems[path]
+        if hasattr(system, "stop"):
+            system.stop()
         del system.oaf
         del self.systems[path]
 
     def putNotifier(self, path, notifier):
-        if (notifier == None):
-            if (path in self.notifiers):
+        path_bytes = path.encode("utf-8") if isinstance(path, str) else path
+        if notifier is None:
+            if path in self.notifiers:
                 del self.notifiers[path]
-            if (path in self.children):
-                del self.children[path]
+            if path_bytes in self.children:
+                del self.children[path_bytes]
         else:
             self.notifiers[path] = notifier
-            notifier.setState(self.color, self.blink,
-                              self.systemName + ": " + self.message,
-                              self.level, self.status)
-            self.putChild(path, notifier)
+            notifier.setState(self.color, self.blink, self.systemName + ": " + self.message, self.level, self.status)
+            self.putChild(path_bytes, notifier)
 
     def getChild(self, path, request):
         # print "called getChild"+path
-        if (path == ""):
+        path_str = path.decode("utf-8") if isinstance(path, bytes) else path
+        if path_str == "":
             return self
-        if (path in self.children):
+        if path in self.children:
             return self.children[path]
-        self.putSystem(path, self.defaultSystemType(path, self))
+        self.putSystem(path_str, self.defaultSystemType(path_str, self))  # type: ignore
         return self.getChild(path, request)
 
     def updateState(self):
@@ -195,19 +216,19 @@ class OafServer(object, resource.Resource):
         self.level = -1
         self.systemName = ""
         self.status = ""
-        for currSystem in self.systems.values():
+        for currSystem in list(self.systems.values()):
             self._statusChange(currSystem)
         self.setIndys()
 
     def _statusChange(self, system):
         """Private updater of status information, returns true if status actually changed"""
         effectiveSystemLevel = system.level * self._getLevelScaler(system)
-        if (system == self.controllingSystem):
+        if system == self.controllingSystem:
             self.level = effectiveSystemLevel
             self.controllingSystem = None  # prevent infinate loop
             self.updateState()
             return False  # Called within updateState
-        if (effectiveSystemLevel < self.level):
+        if effectiveSystemLevel < self.level:
             return False
         self.statusTime = system.statusTime
         self.controllingSystem = system
@@ -227,16 +248,13 @@ class OafServer(object, resource.Resource):
             self.setIndys()
 
     def setIndys(self):
-        print "setting color " + str(
-            self.color) + " from system " + self.systemName
-        for notifier in self.notifiers.values():
-            notifier.setState(self.color, self.blink,
-                              self.systemName + ": " + self.message,
-                              self.level, self.status)
+        print("setting color " + str(self.color) + " from system " + self.systemName)
+        for notifier in list(self.notifiers.values()):
+            notifier.setState(self.color, self.blink, self.systemName + ": " + self.message, self.level, self.status)
 
 
-class Notifier(resource.Resource, object):
-    "A basic notifier class which optionally takes a System and reports failures to it, *DOES NOT IMPLEMENT setState"
+class Notifier(resource.Resource):
+    "A basic notifier class which optionally takes a System and reports failures to it"
 
     def __init__(self, rptSystem=None):
         resource.Resource.__init__(self)
@@ -244,21 +262,19 @@ class Notifier(resource.Resource, object):
         self.status = NONE
 
     def setStateFailed(self, failure):
-        if (self.rptSystem != None):
-            self.rptSystem.message = "Unable to set state for " + self.__class__.__name__ + str(
-                failure)
+        if self.rptSystem is not None:
+            self.rptSystem.message = "Unable to set state for " + self.__class__.__name__ + str(failure)
             self.rptSystem.status = "error"
         return failure
 
     def setStateSuccess(self, data):
-        if (self.rptSystem != None):
+        if self.rptSystem is not None:
             self.rptSystem.message = "State set sucessfully"
             self.rptSystem.status = "ok"
 
     def render_GET(self, request):
         request.setResponseCode(415)
-        return "No Representation<br/>Internal state:<br/>%s" % (
-            str(self.status))
+        return ("No Representation<br/>Internal state:<br/>%s" % (str(self.status))).encode("utf-8")
 
     def setState(self, color, blink, message, level, status):
         self.color = color
@@ -271,57 +287,89 @@ class Notifier(resource.Resource, object):
 class JsonNotifier(Notifier):
     def render_GET(self, request):
         return json.dumps(
-            {'color': self.color, 'blink': self.blink, 'message': self.message,
-             'level': self.level, 'status': self.status})
+            {
+                "color": self.color,
+                "blink": self.blink,
+                "message": self.message,
+                "level": self.level,
+                "status": self.status,
+            }
+        ).encode("utf-8")
 
+
+class OrbNotifier(Notifier):
+    def __init__(self, devId, rptSystem=None):
+        Notifier.__init__(self, rptSystem)
+        self.devId = devId
+        self.setState(WHITE, 0, "", NONE, "none")
+
+    def setState(self, color, blink, message, level, status):
+        from twisted.internet.defer import ensureDeferred
+
+        hsvColor = colorsys.rgb_to_hsv(*color)
+        if hsvColor[2] < 0.1:
+            colorCode = 36
+        else:
+            colorCode = int(hsvColor[0] * 36)
+
+        async def _do_request():
+            try:
+                res = await get_page(
+                    "http://www.myambient.com:8080/java/my_devices/submitdata.jsp?"
+                    + urlencode({"devID": self.devId, "anim": int(blink), "color": colorCode, "comment": message})
+                )
+                self.setStateSuccess(res)
+            except Exception as e:
+                self.setStateFailed(e)
+
+        ensureDeferred(_do_request())
+
+
+##    def render_GET(self,request):
 class PickleNotifier(resource.Resource):
     def __init__(self):
         resource.Resource.__init__(self)
         self.setState(WHITE, 0, "", NONE, "none")
 
     def setState(self, color, blink, message, level, status):
-        self.state = {"color": color, "blink": blink, "message": message,
-                      "level": level, "status": status}
+        self.state = {"color": color, "blink": blink, "message": message, "level": level, "status": status}
         # print "set state"+str(self.state)
 
     def render_GET(self, request):
-        return marshal.dumps(self.state)
+        return json.dumps(self.state).encode("utf-8")
 
 
 class SubServer(OafServer):
     def __init__(self, systemName, oaf=None, defaultSystemType=System):
         self.message = systemName
-        print "initting " + systemName
-        if (oaf != None):
+        print("initting " + systemName)
+        if oaf is not None:
             self.oaf = oaf
         self.status = "none"
         self.statusTime = time.localtime()
-        OafServer.__init__(self)
+        OafServer.__init__(self, defaultSystemType)
         self.systemName = systemName
         self.defaultSystemType = defaultSystemType
 
     def setIndys(self):
-        """On a SubServer, sets all the notifiers with the super of this method 
+        """On a SubServer, sets all the notifiers with the super of this method
         and also sets its parent Oaf as a System would"""
         OafServer.setIndys(self)
-        if (hasattr(self, "oaf")):
-            self.oaf.statusChange(self)
+        if hasattr(self, "oaf"):
+            self.oaf.statusChange(self)  # type: ignore
 
 
 class ScaledSubServer(SubServer):
-    def __init__(self, systemName, oaf, defaultSystemType, scaling,
-                 devID=None):
+    def __init__(self, systemName, oaf, defaultSystemType, scaling, devID=None):
         self.scaling = scaling
-        SubServer.__init__(self, systemName, oaf, defaultSystemType)
+        SubServer.__init__(self, systemName, oaf, defaultSystemType)  # type: ignore
 
     def _getLevelScaler(self, system):
         return self.scaling
 
 
 class CountSystem(System):
-    statusList = {"innactive": (NONE, WHITE, 0),
-                  "active": (DEFAULT, GREEN, 0),
-                  "triggered": (WARNING, VIOLET, 5)}
+    statusList = {"innactive": (NONE, WHITE, 0), "active": (DEFAULT, GREEN, 0), "triggered": (WARNING, VIOLET, 5)}
 
     def __init__(self, systemName, threshold=3):
         System.__init__(self, systemName)
@@ -331,16 +379,21 @@ class CountSystem(System):
                         Count: <INPUT TYPE="TEXT" NAME="count" SIZE="25">"""
 
     def render_GET(self, request):
-        if (request.args.has_key('count')):
-            self.count = request.args['count'][0]
-        if (request.args.has_key('threshold')):
-            self.threshold = int(request.args['threshold'][0])
-        self.form = self._formHeader + self._formBody + """<br>Threshold:  <input type="TEXT" name="threshold" value="%d">""" % self.threshold + self._formFooter
+        if b"count" in request.args:
+            self.count = request.args[b"count"][0].decode("utf-8")
+        if b"threshold" in request.args:
+            self.threshold = int(request.args[b"threshold"][0])
+        self.form = (
+            self._formHeader
+            + self._formBody
+            + """<br>Threshold:  <input type="TEXT" name="threshold" value="%d">""" % self.threshold
+            + self._formFooter
+        )
         return System.render_GET(self, request)
 
     def setCount(self, value):
         newCount = int(value)
-        if (newCount == self._count):
+        if newCount == self._count:
             return
 
         self._count = newCount
@@ -349,25 +402,23 @@ class CountSystem(System):
     def getCount(self):
         return self._count
 
-    count = property(getCount, setCount,
-                     doc="Count of whatever is being counted")
+    count = property(getCount, setCount, doc="Count of whatever is being counted")
 
     def setThreshold(self, value):
-        if (value != self._threshold):
+        if value != self._threshold:
             self._threshold = value
             self.updateStatus()
 
     def getThreshold(self):
         return self._threshold
 
-    threshold = property(getThreshold, setThreshold,
-                         doc="Threshold for triggering")
+    threshold = property(getThreshold, setThreshold, doc="Threshold for triggering")
 
     def updateStatus(self):
         self.message = "Count: %d Threshold: %d" % (self.count, self.threshold)
-        if (self.count <= 0):
+        if self.count <= 0:
             self.status = "innactive"
-        elif (self.count < self.threshold):
+        elif self.count < self.threshold:
             self.status = "active"
         else:
             self.status = "triggered"
@@ -375,47 +426,42 @@ class CountSystem(System):
 
 class GoalSystem(CountSystem):
     def updateStatus(self):
-        if (self.count == None):
+        if self.count is None:
             newStatus = "none"
             self.level = NONE
             self.message = "No Count Yet"
-        elif (self.threshold == 0 or self.threshold == None):
+        elif self.threshold == 0 or self.threshold is None:
             newStatus = "none"
             self.level = NONE
             self.message = "Count: %f No Goal" % self.count
         else:
             self.message = "Count: %f Goal: %f" % (self.count, self.threshold)
             scaleLevel = float(self.count) / self.threshold
-            print "scaleLevel: " + str(scaleLevel)
+            print("scaleLevel: " + str(scaleLevel))
 
-            if (scaleLevel < 1):
+            if scaleLevel < 1:
                 newStatus = "behind"
                 self.level = (1 - scaleLevel) * WARNING + scaleLevel * INFO
-                self.color = tuple(
-                    map(lambda x, y: scaleLevel * x + (1 - scaleLevel) * y,
-                        GREEN, RED))
-            elif (scaleLevel < 2):
+                self.color = tuple(map(lambda x, y: scaleLevel * x + (1 - scaleLevel) * y, GREEN, RED))
+            elif scaleLevel < 2:
                 self.level = INFO
                 newStatus = "ahead"
                 scaleLevel -= 1
-                self.color = tuple(
-                    map(lambda x, y: scaleLevel * x + (1 - scaleLevel) * y,
-                        BLUE, GREEN))
+                self.color = tuple(map(lambda x, y: scaleLevel * x + (1 - scaleLevel) * y, BLUE, GREEN))
             else:
                 self.level = INFO
                 newStatus = "ahead"
                 self.color = BLUE
-        if (self._status != newStatus):
-            self.history = [(newStatus, self.message,
-                             self.statusTime)] + self.history[0:12]
+        if self._status != newStatus:
+            self.history = [(newStatus, self.message, self.statusTime)] + self.history[0:12]
             self._status = newStatus
-        self.oaf.statusChange(self)
+        self.oaf.statusChange(self)  # type: ignore
 
 
 class GoalNetworkElement(GoalSystem):
     def updateStatus(self):
         GoalSystem.updateStatus(self)
-        self.oaf.updateNetwork()
+        self.oaf.updateNetwork()  # type: ignore
 
 
 class GoalNetworkSystem(GoalSystem):
@@ -424,39 +470,54 @@ class GoalNetworkSystem(GoalSystem):
 
     def getChild(self, path, request):
         # print "called getChild"+path
-        if (path == ""):
+        if path == "":
             return self
-        newElement = GoalNetworkElement(path, self, 0)
-        self.putChild(path, newElement)
+        newElement = GoalNetworkElement(path, self, 0)  # type: ignore
+        self.putChild(path, newElement)  # type: ignore
         return newElement
 
     def updateNetwork(self):
         self.threshold = 0
         self.count = 0
-        for element in self.children.values():
-            if (element.threshold != None):
+        for element in list(self.children.values()):
+            if element.threshold is not None:
                 self.threshold += element.threshold
-            if (element.count != None):
+            if element.count is not None:
                 self.count += element.count
         self.updateStatus()
 
     def render_GET(self, request):
         # print "called render"
         head = """<html><head><title>OAF status: %s system: %s</title></head><body bgcolor="%s">""" % (
-        self.status, self.systemName, getWebColor(self.color))
-        currState = """ status: %s system: %s message: %s <br/>color: %s blink: %d<br/>OAF Server Page""" % \
-                    (self.status, self.systemName, self.message,
-                     str(self.color), self.blink)
+            html.escape(str(self.status)),
+            html.escape(str(self.systemName)),
+            getWebColor(self.color),
+        )
+        currState = """ status: %s system: %s message: %s <br/>color: %s blink: %d<br/>OAF Server Page""" % (
+            html.escape(self.status),
+            html.escape(self.systemName),
+            html.escape(self.message),
+            str(self.color),
+            self.blink,
+        )
         systemTable = "<table>"
-        for path, currSystem in self.children.items():
-            systemTable += """<tr bgcolor="white"><td><a href="%s/%s">%s</a></td><td bgcolor="%s">%s</td><td>%s</td><td>%s</td></tr>""" % (
-            request.uri, path, currSystem.systemName,
-            getWebColor(currSystem.color), currSystem.status,
-            currSystem.message,
-            time.strftime("%a %d %b %Y %H:%M:%S", currSystem.statusTime))
+        for path, currSystem in list(self.children.items()):
+            path_str = path.decode("utf-8") if isinstance(path, bytes) else path
+            systemTable += (
+                """<tr bgcolor="white"><td><a href="%s/%s">%s</a></td><td bgcolor="%s">%s</td><td>%s</td><td>%s</td></tr>"""
+                % (
+                    request.uri.decode("utf-8"),
+                    html.escape(path_str),
+                    html.escape(currSystem.systemName),
+                    getWebColor(currSystem.color),
+                    html.escape(currSystem.status),
+                    html.escape(currSystem.message),
+                    time.strftime("%a %d %b %Y %H:%M:%S", currSystem.statusTime),
+                )
+            )
         systemTable += "</table>"
         foot = """<a href="..">parent oaf</a></body></html>"""
-        return head + currState + systemTable + foot
+        return (head + currState + systemTable + foot).encode("utf-8")
 
 
 class Monitor(System):
@@ -464,7 +525,12 @@ class Monitor(System):
         super(Monitor, self).__init__(name)
 
         self.interval = interval
-        task.LoopingCall(self.checkSystem).start(self.interval)
+        self.loop = task.LoopingCall(self.checkSystem)
+        self.loop.start(self.interval)
+
+    def stop(self):
+        if self.loop.running:
+            self.loop.stop()
 
     def checkSystem(self):
         # print "Called Monitor.checkSystem for "+self.systemName
@@ -474,60 +540,58 @@ class Monitor(System):
 class ChangeMonitor(Monitor):
     def __init__(self, name):
         Monitor.__init__(self, "Change Monitor for " + name, 600)
-        self.message = "System started at: " + time.strftime(
-            "%a %d %b %Y %H:%M:%S")
+        self.message = "System started at: " + time.strftime("%a %d %b %Y %H:%M:%S")
 
     def checkSystem(self):
         # print "Checking, no change for: %d"%(time.mktime(time.localtime())-time.mktime(self.statusTime))
-        if ((self.status == "working") and ((time.mktime(
-                time.localtime()) - time.mktime(
-                self.statusTime)) > self.interval)):
+        if (self.status == "working") and (
+            (time.mktime(time.localtime()) - time.mktime(self.statusTime)) > self.interval
+        ):
             self.message = "No change recieved for %d seconds." % (
-                        time.mktime(time.localtime()) - time.mktime(
-                    self.statusTime))
+                time.mktime(time.localtime()) - time.mktime(self.statusTime)
+            )
             self.status = "error"
         Monitor.checkSystem(self)
 
 
 class ProcessMonitor(Monitor):
-    statusList = {"none": (NONE, WHITE, 0), "ok": (DEFAULT, GREEN, 0),
-                  "working": (INFO, GREEN, 5),
-                  "success": (INFO, GREEN, 0), "failure": (WARNING, RED, 0),
-                  "error": (ALERT, RED, 7)}
+    statusList = {
+        "none": (NONE, WHITE, 0),
+        "ok": (DEFAULT, GREEN, 0),
+        "working": (INFO, GREEN, 5),
+        "success": (INFO, GREEN, 0),
+        "failure": (WARNING, RED, 0),
+        "error": (ALERT, RED, 7),
+    }
 
     def __init__(self, name, range=2400):
         Monitor.__init__(self, "Process Monitor for " + name, 100)
         self.lastStepTime = time.localtime()
         self.range = range
         self.lagLevel = 0
-        self.message = "System started at: " + time.strftime(
-            "%a %d %b %Y %H:%M:%S")
+        self.message = "System started at: " + time.strftime("%a %d %b %Y %H:%M:%S")
 
     def render_GET(self, request):
-        if (request.args.has_key('status') and (
-                request.args['status'][0] != '')):
+        if b"status" in request.args and (request.args[b"status"][0] != b""):
             self.lastStepTime = time.localtime()
         return System.render_GET(self, request)
 
     def checkSystem(self):
         # print "Checking, no change for: %d"%(time.mktime(time.localtime())-time.mktime(self.statusTime))
-        if (self.status == "working"):
-            lagLevel = (time.mktime(time.localtime()) - time.mktime(
-                self.lastStepTime)) / self.range
-            if (lagLevel > 1):
+        if self.status == "working":
+            lagLevel = (time.mktime(time.localtime()) - time.mktime(self.lastStepTime)) / self.range
+            if lagLevel > 1:
                 lagLevel = 1
             # if the system has gotten better or Level has been set to none
             # update the level
             # This implements the ACK function, clearing the ACK iff
             # the system has cleared its error
-            if ((lagLevel < self.lagLevel) or (self.level != NONE)):
+            if (lagLevel < self.lagLevel) or (self.level != NONE):
                 self.level = INFO + lagLevel * (WARNING - INFO)
             self.lagLevel = lagLevel
-            self.color = tuple(
-                map(lambda x, y: lagLevel * x + (1 - lagLevel) * y, RED,
-                    GREEN))
+            self.color = tuple(map(lambda x, y: lagLevel * x + (1 - lagLevel) * y, RED, GREEN))
             self.blink = 7 * lagLevel + 1
-            self.oaf.statusChange(self)
+            self.oaf.statusChange(self)  # type: ignore
         Monitor.checkSystem(self)
 
 
@@ -539,14 +603,13 @@ class PageMonitor(Monitor):
         self.warningLevel = 0
         self.threshold = 3
         self.pingCount = 0
-        if (allowedErrors == None):
+        if allowedErrors is None:
             allowedErrors = []
         self.allowedErrors = allowedErrors
 
         super(PageMonitor, self).__init__("Monitor for " + page, interval)
 
-        self.message = "System started at: " + time.strftime(
-            "%a %d %b %Y %H:%M:%S")
+        self.message = "System started at: " + time.strftime("%a %d %b %Y %H:%M:%S")
 
     def checkSystem(self):
         self.pingCount = 0
@@ -554,50 +617,61 @@ class PageMonitor(Monitor):
         Monitor.checkSystem(self)
 
     def getPage(self):
-        if (self.pingCount <= 3 * self.threshold):
+        from twisted.internet.defer import ensureDeferred
+
+        if self.pingCount <= 3 * self.threshold:
             self.pingCount += 1
-            client.getPage(self.page).addErrback(self.pageError).addCallback(
-                self.pageRetrieved)
+
+            async def _do_request():
+                try:
+                    res = await get_page(self.page)
+                    self.pageRetrieved(res)
+                except Exception as e:
+                    self.pageError(e)
+
+            ensureDeferred(_do_request())
 
     def pageRetrieved(self, data):
 
-        self.message = "Page retrieved at: " + time.strftime(
-            "%a %d %b %Y %H:%M:%S")
-        if (self._pageRetrieved()):
+        self.message = "Page retrieved at: " + time.strftime("%a %d %b %Y %H:%M:%S")
+        if self._pageRetrieved():
             self.status = "ok"
         else:
-            reactor.callLater(5, self.getPage)
+            reactor.callLater(5, self.getPage)  # type: ignore
 
     # returns true if system can be considered up
     def _pageRetrieved(self):
-        """Adjusts internal counts, returns true if system can now be considered up or 
+        """Adjusts internal counts, returns true if system can now be considered up or
         or false if the the system should be considered iffy"""
-        if (self.warningLevel > 0):
-            self.warningLevel -= .5
+        if self.warningLevel > 0:
+            self.warningLevel -= 0.5
 
-        if (self.warningLevel > 0):
+        if self.warningLevel > 0:
             return False
         else:
             return True
 
     def pageError(self, failure):
-        self.message = "Page not retrieved at: " + time.strftime(
-            "%a, %d %b %Y %H:%M:%S") + " warning level: " + (str)(
-            self.warningLevel)
-        if (isinstance(failure, error.Error)):
-            if (failure.value.status in self.allowedErrors):
-                print "Found status %s in allowedErrors" % failure.value.status
+        self.message = (
+            "Page not retrieved at: "
+            + time.strftime("%a, %d %b %Y %H:%M:%S")
+            + " warning level: "
+            + (str)(self.warningLevel)
+        )
+        if isinstance(failure, error.Error):
+            if failure.value.status in self.allowedErrors:  # type: ignore
+                print("Found status %s in allowedErrors" % failure.value.status)  # type: ignore
                 return None
             else:
-                print "%s is a genuine failure" % (failure.value.status)
-        if (self.pingCount > 3 * self.threshold):
+                print("%s is a genuine failure" % (failure.value.status))  # type: ignore
+        if self.pingCount > 3 * self.threshold:
             self.message = "Ping count exceeded"
             self.status = "error"
-        elif (self.warningLevel > self.threshold):
+        elif self.warningLevel > self.threshold:
             self.status = "error"
         else:
             self.warningLevel += 1
-            reactor.callLater(5, self.getPage)
+            reactor.callLater(5, self.getPage)  # type: ignore
 
 
 class PickledSystem(PageMonitor):
@@ -610,29 +684,29 @@ class PickledSystem(PageMonitor):
 
     def pageRetrieved(self, data):
 
-        PageMonitor._pageRetrieved(
-            self)  # NB iffy systems are not rechecked until sucesss
+        PageMonitor._pageRetrieved(self)  # NB iffy systems are not rechecked until sucesss
         # a PickledSystem uses the PageMonitor
         # mechanism to retry only on failure.
         try:
-            self.remoteStatus = marshal.loads(data)  # print self.remoteStatus
-            if ((self.color == self.remoteStatus['color']) \
-                    and (self.message == self.remoteStatus['message']) \
-                    and (self.blink == self.remoteStatus['blink']) \
-                    and (self.level == self.remoteStatus['level']) \
-                    and (self.status == self.remoteStatus['status'])):
+            self.remoteStatus = json.loads(data.decode("utf-8"))  # print self.remoteStatus
+            if (
+                (self.color == self.remoteStatus["color"])
+                and (self.message == self.remoteStatus["message"])
+                and (self.blink == self.remoteStatus["blink"])
+                and (self.level == self.remoteStatus["level"])
+                and (self.status == self.remoteStatus["status"])
+            ):
                 return
 
-            self.color = self.remoteStatus['color']
-            self.message = self.remoteStatus['message']
-            self.level = self.remoteStatus['level']
-            self.blink = self.remoteStatus['blink']
-            self._status = self.remoteStatus['status']
+            self.color = self.remoteStatus["color"]
+            self.message = self.remoteStatus["message"]
+            self.level = self.remoteStatus["level"]
+            self.blink = self.remoteStatus["blink"]
+            self._status = self.remoteStatus["status"]
             self.statusTime = time.localtime()
-            self.history = [(self._status, self.message,
-                             self.statusTime)] + self.history[0:12]
-            self.oaf.statusChange(self)  # print "set status "+value
-        except:
+            self.history = [(self._status, self.message, self.statusTime)] + self.history[0:12]
+            self.oaf.statusChange(self)  # type: ignore
+        except Exception:
             # if there is any exception, assume garbled data, increment the warning level
             self._status = "Exception in pickle parsing."
             self.warningLevel += 1
@@ -648,14 +722,17 @@ if __name__ == "__main__":
     # oafRoot.putSystem('name3', PageMonitor('https://example.com',oafRoot))
     # oafRoot.putSystem('name4', PageMonitor('https://example.com',oafRoot))
 
-    root.putChild("orb", oafRoot)
-    root.putChild("exform", exampleForm.Simple)
+    if len(sys.argv) > 2:
+        oafRoot.putNotifier("orb", OrbNotifier(sys.argv[2]))
+
+    root.putChild(b"orb", oafRoot)  # type: ignore
+    root.putChild(b"exform", exampleForm.Simple())  # type: ignore
     site = server.Site(root)
 
-    if (len(sys.argv) > 1):
-        reactor.listenTCP(int(sys.argv[1]), site)
+    if len(sys.argv) > 1:
+        reactor.listenTCP(int(sys.argv[1]), site)  # type: ignore
     else:
-        reactor.listenTCP(8000, site)
+        reactor.listenTCP(8000, site)  # type: ignore
 
-    reactor.run()
-    print "Reactor stopped."
+    reactor.run()  # type: ignore
+    print("Reactor stopped.")
