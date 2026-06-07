@@ -1,5 +1,3 @@
-import twisted.internet
-import twisted.web
 from twisted.internet.error import CannotListenError
 
 from orbLib import OaF
