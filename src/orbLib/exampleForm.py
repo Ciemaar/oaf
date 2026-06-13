@@ -42,7 +42,7 @@ class Simple(resource.Resource):
 <INPUT TYPE="SUBMIT" NAME="name_submit" VALUE="Submit">
 </FORM>
         """
-        return out_html + form
+        return (out_html + form).encode("utf-8")
 
 
 if __name__ == "__main__":

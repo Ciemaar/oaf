@@ -20,6 +20,7 @@ dependencies = [
     "twisted>=22.10.0",
     # "wxpython>=4.2.0",  # Commented out due to build complexity in sandbox; re-enable if needed or for desktopSLED work
     "pyserial>=3.5",
+    "defusedxml>=0.7.1",
 ]
 requires-python = ">=3.10"
 
@@ -78,7 +79,8 @@ deps = [
     "pytest-cov>=4.0",
     "sqlalchemy>=2.0",
     "twisted>=22.10.0",
-    "pyserial>=3.5"
+    "pyserial>=3.5",
+    "defusedxml>=0.7.1"
 ]
 commands = [
     ["pytest", "{posargs:tests}"]

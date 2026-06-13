@@ -1,6 +1,10 @@
 import sys
-import xmlrpc.client as xmlrpclib
+import xmlrpc.client as xmlrpclib  # nosec B411
 from io import BytesIO
+
+import defusedxml.xmlrpc
+
+defusedxml.xmlrpc.monkey_patch()
 
 from twisted.internet import reactor
 from twisted.web import resource, server

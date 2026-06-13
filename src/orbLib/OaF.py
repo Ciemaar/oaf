@@ -153,7 +153,7 @@ class OafServer(resource.Resource):
             systemTable += (
                 """<tr bgcolor="white"><td><a href="%s/%s">%s</a></td><td bgcolor="%s">%s</td><td>%s</td><td>%s</td></tr>"""
                 % (
-                    request.uri.decode("utf-8"),
+                    html.escape(request.uri.decode("utf-8")),
                     html.escape(path),
                     html.escape(currSystem.systemName),
                     getWebColor(currSystem.color),
@@ -506,7 +506,7 @@ class GoalNetworkSystem(GoalSystem):
             systemTable += (
                 """<tr bgcolor="white"><td><a href="%s/%s">%s</a></td><td bgcolor="%s">%s</td><td>%s</td><td>%s</td></tr>"""
                 % (
-                    request.uri.decode("utf-8"),
+                    html.escape(request.uri.decode("utf-8")),
                     html.escape(path_str),
                     html.escape(currSystem.systemName),
                     getWebColor(currSystem.color),
