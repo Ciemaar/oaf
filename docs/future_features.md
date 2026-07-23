@@ -34,3 +34,6 @@ The desktop UI (`desktopSLED`) is currently built with `wxPython`.
 
 - **Web-Based Dashboard:** A centralized, reactive web dashboard (e.g., built with React or Vue) to visualize the status of all `OafServer` networks in real-time without relying on a desktop client.
 - **Dynamic Configuration UI:** Currently, systems and notifiers are largely instantiated in code (like `main.py`). A web interface to add, edit, and remove monitors dynamically would greatly improve usability.
+
+## 5. Typing and Code Quality
+- **wxPython Type Stubs:** Introduce proper typing for `wxPython` dependencies within `desktopSLED` rather than utilizing `# type: ignore` directives. This may involve incorporating `wxpython-stubs` or similar libraries to ensure full `pyright` compliance for desktop application code.
