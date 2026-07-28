@@ -35,6 +35,8 @@ class DBBase(Base):
 
 
 class PageMonitor(DBBase):
+    """Database model representing a Page Monitor."""
+
     __tablename__ = "pagemonitors"
 
     id: Mapped[int] = mapped_column(primary_key=True)
