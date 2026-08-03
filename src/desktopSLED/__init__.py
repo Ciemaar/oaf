@@ -1,4 +1,6 @@
 import wx  # type: ignore
+
+# TODO: add handling of wx typing as a future feature or GitHub issue
 from twisted.internet import wxreactor
 from twisted.internet.error import CannotListenError
 from twisted.web import resource, server
