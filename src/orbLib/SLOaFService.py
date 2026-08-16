@@ -31,20 +31,26 @@ oafRoot.putSystem("slsystems", slSub)
 oafRoot.putSystem("sldev", SLOaf.SLServer("Second Life Dev"))
 
 from sqlalchemy import select
+from sqlalchemy.exc import OperationalError
 
-for user in db.Session.scalars(select(db.SLAvatar)).all():
-    print(("SLAvatar %s" % (user.avname)))
-    # user.restoreRunVars()
-    userServer = user.getServer()
-    oafRoot.putSystem(user.avname, userServer)
-    for oaf in user.oafs:
-        print("placing " + str(oaf.OafName))
-        # must place before init because update is called in init and changes
-        # the system name to that of the currently active systems
-        oafResource = oaf.getOaf()
-        userServer.putSystem(oaf.OafName, oafResource)
+try:
+    for user in db.Session.scalars(select(db.SLAvatar)).all():
+        print(("SLAvatar %s" % (user.avname)))
+        # user.restoreRunVars()
+        userServer = user.getServer()
+        oafRoot.putSystem(user.avname, userServer)
+        for oaf in user.oafs:
+            print("placing " + str(oaf.OafName))
+            # must place before init because update is called in init and changes
+            # the system name to that of the currently active systems
+            oafResource = oaf.getOaf()
+            userServer.putSystem(oaf.OafName, oafResource)
 
-print("Database load complete")
+    print("Database load complete")
+except OperationalError as e:
+    print("Warning: Database tables are missing. Skipping user load.")
+    print(f"Details: {e}")
+    print('To initialize the database, you can run: python -c "import db; db.Base.metadata.create_all(db.engine)"')
 
 dsexport = OaF.SubServer("dsexport", oafRoot, OaF.ProcessMonitor)
 # dsexport.putChild("fill", OaF.System("phil",dsexport))

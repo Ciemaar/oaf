@@ -30,6 +30,14 @@ pip install .
 
 *(Note: If you intend to use the desktop tray application `desktopSLED`, you can install it with the `SLED` extra: `pip install .[SLED]`)*
 
+## Initializing the Database
+
+Before you start the OAF web service, you must initialize its SQLite database with base tables. The library provides an executable module to set up an example user layout.
+
+```bash
+python -c "import db; db.Base.metadata.create_all(db.engine)"
+```
+
 ## Running the Main Server
 
 The core of OAF is the web server that runs the monitors. You can start it using:
