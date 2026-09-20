@@ -5,8 +5,6 @@ from twisted.web import resource, server
 
 
 class Simple(resource.Resource):
-    """TODO: SME to provide docstring"""
-
     isLeaf = True
 
     def render(self, request):

@@ -21,8 +21,6 @@ TEMPORB = 4
 
 
 class SLNotifier(OaF.Notifier):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, rptSystem=None):
         OaF.Notifier.__init__(self, rptSystem)
         self.agent = Agent(reactor)
@@ -120,8 +118,6 @@ class SLNotifier(OaF.Notifier):
 
 
 class PrimarySLNotifier(SLNotifier):
-    """TODO: SME to provide docstring"""
-
     def _SLCSV(self):
         if hasattr(self, "oaf") and self.oaf.needsConfig:  # type: ignore
             return SLNotifier._SLCSV(self) + b"\nNeeds Config"
@@ -189,8 +185,6 @@ class SLServer(OaF.SubServer):
 
 
 class BoundSLOafServer(SLServer):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, configData, *args, **kwargs):
         super(BoundSLOafServer, self).__init__(
             "loading from db", configData.AVUUID, watchedUrls=[x.url for x in configData.pagemonitors], *args, **kwargs
@@ -200,8 +194,6 @@ class BoundSLOafServer(SLServer):
 
 
 class SLOafServer(OaF.OafServer):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, db_id):
         OaF.OafServer.__init__(self, SLServer)  # type: ignore
         self.db_id = db_id

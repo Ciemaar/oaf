@@ -13,8 +13,6 @@ from .TrayIcon import TrayIcon
 
 
 class SledApp(wx.App):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, oafRoot):
         self.oafRoot = oafRoot
         super(SledApp, self).__init__()

@@ -6,8 +6,6 @@ from .OaF import NONE, Notifier, get_page
 
 
 class OrbNotifier(Notifier):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, devId, rptSystem=None):
         Notifier.__init__(self, rptSystem)
         self.devId = devId

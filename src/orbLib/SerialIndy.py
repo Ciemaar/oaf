@@ -48,8 +48,6 @@ def delayCount():
 
 
 class SerialIndyNotifier(OaF.Notifier):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, portDev, rptSystem=None):
         super(SerialIndyNotifier, self).__init__(rptSystem)
         self.serialPort = serial.Serial(portDev)

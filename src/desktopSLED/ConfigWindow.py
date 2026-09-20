@@ -9,8 +9,6 @@ from .ids import ID_ABOUT, ID_CLOSE, ID_FIELD1, ID_OPEN_PORT
 
 
 class ConfigWindow(wx.Frame):
-    """TODO: SME to provide docstring"""
-
     pklFilename = "sledConfig.cfg"
 
     def __init__(self, parent, id, title, oafRoot):

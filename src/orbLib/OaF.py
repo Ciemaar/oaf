@@ -34,8 +34,6 @@ CRITICAL = 5
 
 
 class System(resource.Resource):
-    """TODO: SME to provide docstring"""
-
     statusList = {
         "none": (NONE, WHITE, 0),
         "ok": (DEFAULT, GREEN, 0),
@@ -125,8 +123,6 @@ Message: <input TYPE="TEXT" NAME="message" SIZE="25">"""
 
 
 class OafServer(resource.Resource):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, defaultSystemType=System):
         resource.Resource.__init__(self)
         self.systems = {}
@@ -289,8 +285,6 @@ class Notifier(resource.Resource):
 
 
 class JsonNotifier(Notifier):
-    """TODO: SME to provide docstring"""
-
     def render_GET(self, request):
         return json.dumps(
             {
@@ -304,8 +298,6 @@ class JsonNotifier(Notifier):
 
 
 class OrbNotifier(Notifier):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, devId, rptSystem=None):
         Notifier.__init__(self, rptSystem)
         self.devId = devId
@@ -335,8 +327,6 @@ class OrbNotifier(Notifier):
 
 ##    def render_GET(self,request):
 class PickleNotifier(resource.Resource):
-    """TODO: SME to provide docstring"""
-
     def __init__(self):
         resource.Resource.__init__(self)
         self.setState(WHITE, 0, "", NONE, "none")
@@ -350,8 +340,6 @@ class PickleNotifier(resource.Resource):
 
 
 class SubServer(OafServer):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, systemName, oaf=None, defaultSystemType=System):
         self.message = systemName
         print("initting " + systemName)
@@ -372,8 +360,6 @@ class SubServer(OafServer):
 
 
 class ScaledSubServer(SubServer):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, systemName, oaf, defaultSystemType, scaling, devID=None):
         self.scaling = scaling
         SubServer.__init__(self, systemName, oaf, defaultSystemType)  # type: ignore
@@ -383,8 +369,6 @@ class ScaledSubServer(SubServer):
 
 
 class CountSystem(System):
-    """TODO: SME to provide docstring"""
-
     statusList = {"innactive": (NONE, WHITE, 0), "active": (DEFAULT, GREEN, 0), "triggered": (WARNING, VIOLET, 5)}
 
     def __init__(self, systemName, threshold=3):
@@ -441,8 +425,6 @@ class CountSystem(System):
 
 
 class GoalSystem(CountSystem):
-    """TODO: SME to provide docstring"""
-
     def updateStatus(self):
         if self.count is None:
             newStatus = "none"
@@ -477,16 +459,12 @@ class GoalSystem(CountSystem):
 
 
 class GoalNetworkElement(GoalSystem):
-    """TODO: SME to provide docstring"""
-
     def updateStatus(self):
         GoalSystem.updateStatus(self)
         self.oaf.updateNetwork()  # type: ignore
 
 
 class GoalNetworkSystem(GoalSystem):
-    """TODO: SME to provide docstring"""
-
     def statusChange(self, system):
         pass
 
@@ -545,8 +523,6 @@ class GoalNetworkSystem(GoalSystem):
 
 
 class Monitor(System):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, name, interval=600):
         super(Monitor, self).__init__(name)
 
@@ -564,8 +540,6 @@ class Monitor(System):
 
 
 class ChangeMonitor(Monitor):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, name):
         Monitor.__init__(self, "Change Monitor for " + name, 600)
         self.message = "System started at: " + time.strftime("%a %d %b %Y %H:%M:%S")
@@ -583,8 +557,6 @@ class ChangeMonitor(Monitor):
 
 
 class ProcessMonitor(Monitor):
-    """TODO: SME to provide docstring"""
-
     statusList = {
         "none": (NONE, WHITE, 0),
         "ok": (DEFAULT, GREEN, 0),
@@ -626,8 +598,6 @@ class ProcessMonitor(Monitor):
 
 
 class PageMonitor(Monitor):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, page, threshold=3, interval=600, allowedErrors=None):
         "Setup before init so that check page can run in init"
 
@@ -707,8 +677,6 @@ class PageMonitor(Monitor):
 
 
 class PickledSystem(PageMonitor):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, page, threshold=3):
         super(PickledSystem, self).__init__(page, threshold, interval=10)
         self.color = WHITE

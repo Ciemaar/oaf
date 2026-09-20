@@ -19,14 +19,10 @@ Session = scoped_session(session_factory)
 
 
 class Base(DeclarativeBase):
-    """TODO: SME to provide docstring"""
-
     pass
 
 
 class DBBase(Base):
-    """TODO: SME to provide docstring"""
-
     __abstract__ = True
 
     @classmethod
@@ -73,8 +69,6 @@ class PageMonitor(DBBase):
 
 
 class Oaf(DBBase):
-    """TODO: SME to provide docstring"""
-
     __tablename__ = "oafs"
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -99,8 +93,6 @@ class Oaf(DBBase):
 
 
 class SLAvatar(DBBase):
-    """TODO: SME to provide docstring"""
-
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)

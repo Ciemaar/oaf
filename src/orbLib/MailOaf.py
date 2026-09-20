@@ -5,8 +5,6 @@ from .OaF import Monitor
 
 
 class POP3CountProtocol(pop3client.POP3Client):  # type: ignore
-    """TODO: SME to provide docstring"""
-
     allowInsecureLogin = True
 
     def serverGreeting(self, greeting):
@@ -26,8 +24,6 @@ class POP3CountProtocol(pop3client.POP3Client):  # type: ignore
 
 
 class POP3CountFactory(protocol.ClientFactory):
-    """TODO: SME to provide docstring"""
-
     protocol = POP3CountProtocol
 
     def __init__(self, username, password):
@@ -40,8 +36,6 @@ class POP3CountFactory(protocol.ClientFactory):
 
 
 class IMAPMailCountProtocol(imap4.IMAP4Client):
-    """TODO: SME to provide docstring"""
-
     def serverGreeting(self, capabilities):
         from twisted.internet.defer import ensureDeferred
 
@@ -69,8 +63,6 @@ class IMAPMailCountProtocol(imap4.IMAP4Client):
 
 
 class IMAPMailCountFactory(protocol.ClientFactory):
-    """TODO: SME to provide docstring"""
-
     protocol = IMAPMailCountProtocol
 
     def __init__(self, username, password):
@@ -83,8 +75,6 @@ class IMAPMailCountFactory(protocol.ClientFactory):
 
 
 class MailMonitor(Monitor):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, systemName):
         super(MailMonitor, self).__init__(systemName)
         self.baseNew = 0
@@ -122,8 +112,6 @@ class MailMonitor(Monitor):
 
 
 class IMAPMailMonitor(MailMonitor):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, server, username, password):
         self.server = server
         self.username = username
@@ -137,8 +125,6 @@ class IMAPMailMonitor(MailMonitor):
 
 
 class POP3MailMonitor(MailMonitor):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, server, username, password):
         self.server = server
         self.username = username

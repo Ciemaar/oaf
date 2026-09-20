@@ -7,8 +7,6 @@ from .ids import ID_ABOUT, ID_CONFIG, ID_EXIT
 
 
 class TrayIcon(wx.TaskBarIcon, OaF.Notifier):
-    """TODO: SME to provide docstring"""
-
     def __init__(self, app):
         self.app = app
         wx.TaskBarIcon.__init__(self)
