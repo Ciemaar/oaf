@@ -1,27 +1,33 @@
-from twisted.internet import protocol, defer, reactor
-from twisted.mail import imap4
-from twisted.mail import pop3client
+from twisted.internet import defer, protocol, reactor
+from twisted.mail import imap4, pop3client  # type: ignore
 
-from OaF import Monitor
+from .OaF import Monitor
 
 
-class POP3CountProtocol(pop3client.POP3Client):
+class POP3CountProtocol(pop3client.POP3Client):  # type: ignore
+    """TODO: SME to provide docstring"""
+
     allowInsecureLogin = True
 
     def serverGreeting(self, greeting):
-        pop3client.POP3Client.serverGreeting(self, greeting)
-        login = self.login(self.factory.username, self.factory.password)
-        login.addCallback(self._loggedIn)
-        login.chainDeferred(self.factory.deferred)
+        from twisted.internet.defer import ensureDeferred
 
-    def _loggedIn(self, result):
-        return self.stat().addCallback(self.gotStat)
+        pop3client.POP3Client.serverGreeting(self, greeting)  # type: ignore
 
-    def gotStat(self, stat):
-        return stat[0]
+        async def _do_login():
+            try:
+                await self.login(self.factory.username, self.factory.password)
+                stat = await self.stat()
+                self.factory.deferred.callback(stat[0])
+            except Exception as e:
+                self.factory.deferred.errback(e)
+
+        ensureDeferred(_do_login())
 
 
 class POP3CountFactory(protocol.ClientFactory):
+    """TODO: SME to provide docstring"""
+
     protocol = POP3CountProtocol
 
     def __init__(self, username, password):
@@ -34,22 +40,28 @@ class POP3CountFactory(protocol.ClientFactory):
 
 
 class IMAPMailCountProtocol(imap4.IMAP4Client):
+    """TODO: SME to provide docstring"""
+
     def serverGreeting(self, capabilities):
-        login = self.login(self.factory.username, self.factory.password)
-        login.addCallback(self.__loggedIn)
-        login.chainDeferred(self.factory.deferred)
+        from twisted.internet.defer import ensureDeferred
 
-    def __loggedIn(self, results):
-        return self.list("", "*").addCallback(self.__gotMailboxInfo)
+        async def _do_login():
+            try:
+                await self.login(self.factory.username, self.factory.password)
+                # Note: list() returns a tuple containing the list of mailboxes
+                mailbox_list = await self.list("", "*")
+                inbox_name = "inbox"
+                for _flags, _hierarchy, name in mailbox_list:
+                    if name.lower() == "inbox":
+                        inbox_name = name
+                        break
 
-    def __getMailboxList(self, list):
-        for flags, hierarchy, name in list:
-            if (list.lower() == "inbox"):
-                print flags
-                self.examine(name).addCallback(self.__gotMailboxInfo)
+                info = await self.examine(inbox_name)
+                self.factory.deferred.callback(info.get("UNSEEN", 0))
+            except Exception as e:
+                self.factory.deferred.errback(e)
 
-    def __gotMailboxInfo(self, info):
-        return info['UNSEEN']
+        ensureDeferred(_do_login())
 
     def connectionLost(self, reason):
         if not self.factory.deferred.called:
@@ -57,6 +69,8 @@ class IMAPMailCountProtocol(imap4.IMAP4Client):
 
 
 class IMAPMailCountFactory(protocol.ClientFactory):
+    """TODO: SME to provide docstring"""
+
     protocol = IMAPMailCountProtocol
 
     def __init__(self, username, password):
@@ -69,23 +83,32 @@ class IMAPMailCountFactory(protocol.ClientFactory):
 
 
 class MailMonitor(Monitor):
+    """TODO: SME to provide docstring"""
+
     def __init__(self, systemName):
         super(MailMonitor, self).__init__(systemName)
         self.baseNew = 0
 
     def checkSystem(self):
-        self.getNewMailCount().addCallback(self.gotNewMailCount).addErrback(
-            self.errorInMailCheck)
+        from twisted.internet.defer import ensureDeferred
+
+        async def _do_check():
+            try:
+                count = await self.getNewMailCount()
+                self.gotNewMailCount(count)
+            except Exception as e:
+                self.errorInMailCheck(e)
+
+        ensureDeferred(_do_check())
 
     def gotNewMailCount(self, count):
-        if (count == self.baseNew):
+        if count == self.baseNew:
             return
-        elif (count < self.baseNew):
+        elif count < self.baseNew:
             self.baseNew = count
             self.status = "ok"
         else:
-            self.message = "%d new messages including %d messages kept as new." % (
-            count, self.baseNew)
+            self.message = "%d new messages including %d messages kept as new." % (count, self.baseNew)
             self.status = "working"
 
     def errorInMailCheck(self, failure):
@@ -99,28 +122,30 @@ class MailMonitor(Monitor):
 
 
 class IMAPMailMonitor(MailMonitor):
+    """TODO: SME to provide docstring"""
+
     def __init__(self, server, username, password):
-        super(IMAPMailMonitor, self).__init__(
-            "Mail monitor for %s@%s (IMAP)" % (username, server))
         self.server = server
         self.username = username
         self.password = password
+        super(IMAPMailMonitor, self).__init__("Mail monitor for %s@%s (IMAP)" % (username, server))
 
     def getNewMailCount(self):
         factory = IMAPMailCountFactory(self.username, self.password)
-        reactor.connectTCP(self.server, 143, factory)
+        reactor.connectTCP(self.server, 143, factory)  # type: ignore
         return factory.deferred
 
 
 class POP3MailMonitor(MailMonitor):
+    """TODO: SME to provide docstring"""
+
     def __init__(self, server, username, password):
-        super(POP3MailMonitor, self).__init__(
-            "Mail monitor for %s@%s (POP3)" % (username, server))
         self.server = server
         self.username = username
         self.password = password
+        super(POP3MailMonitor, self).__init__("Mail monitor for %s@%s (POP3)" % (username, server))
 
     def getNewMailCount(self):
         factory = POP3CountFactory(self.username, self.password)
-        reactor.connectTCP(self.server, 110, factory)
+        reactor.connectTCP(self.server, 110, factory)  # type: ignore
         return factory.deferred
