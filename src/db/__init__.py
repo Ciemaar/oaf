@@ -1,56 +1,59 @@
 import re
+from typing import List, Optional
 
-from secrets import AVUUID, AVNAME
-from sqlalchemy import *
-from sqlalchemy.orm import mapper, relation
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.orm.session import Session
+from sqlalchemy import ForeignKey, String, create_engine, select
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, scoped_session, sessionmaker
 
-import orbLib.SLOaf as SLOaf
+# Handle missing secrets
+try:
+    from .secrets import AVNAME, AVUUID
+except ImportError:
+    AVUUID = "default-uuid"
+    AVNAME = "Default User"
 
 uri = "sqlite:///./testdb.db"
 engine = create_engine(uri)
 
-# Global session manager.  Session() returns the session object
-# appropriate for the current web request.
-Session = scoped_session(sessionmaker(autoflush=False, transactional=True,
-                                      bind=engine))
-
-meta = MetaData()
-
-print "Connecting to database %s" % uri
-meta.bind = engine
+session_factory = sessionmaker(autoflush=False, expire_on_commit=False, bind=engine)
+Session = scoped_session(session_factory)
 
 
-class DBBase(object):
-    @classmethod
-    def query(cls):
-        return Session.query(cls)
+class Base(DeclarativeBase):
+    pass
+
+
+class DBBase(Base):
+    __abstract__ = True
 
     @classmethod
     def get(cls, id):
-        return cls.query().get(id)
+        return Session.get(cls, id)
 
     @classmethod
     def all(cls):
-        return cls.query().all()
-
-
-pagemonitors_table = Table('pagemonitors', meta,
-                           Column('id', Integer, primary_key=True),
-                           Column('oaf_id', Integer, ForeignKey('oafs.id')),
-                           Column('path', String(20)),
-                           Column('url', String(255, convert_unicode=True))
-                           )
+        return Session.scalars(select(cls)).all()
 
 
 class PageMonitor(DBBase):
-    def __init__(self, url, path=None):
+    """Database model representing a Page Monitor."""
 
+    __tablename__ = "pagemonitors"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    oaf_id: Mapped[Optional[int]] = mapped_column(ForeignKey("oafs.id"))
+    path: Mapped[Optional[str]] = mapped_column(String(20))
+    url: Mapped[Optional[str]] = mapped_column(String(255))
+
+    oaf: Mapped["Oaf"] = relationship(back_populates="pagemonitors")
+
+    def __init__(self, url, path=None):
         self.url = url
-        if (path == None):
-            self.path = re.match(r'https?://(www\.)?([^/]{0,20})', url).group(
-                2)
+        if path is None:
+            match = re.match(r"https?://(www\.)?([^/]{0,20})", url)
+            if match:
+                self.path = match.group(2)
+            else:
+                self.path = "unknown"
         else:
             self.path = path
 
@@ -58,85 +61,79 @@ class PageMonitor(DBBase):
         return self.url
 
     def getSystem(self):
+        # We use an inline import here to avoid circular dependency issues,
+        # as SLOaf depends on components that might in turn depend on db
+        from orbLib import SLOaf
+
         return SLOaf.PageMonitor(self.url)
 
 
-oafs_table = Table('oafs', meta,
-                   Column('id', Integer, primary_key=True),
-                   Column('user_id', Integer, ForeignKey('users.id')),
-                   Column('OafName', String(20)),
-                   Column('AVUUID', String(48))
-                   )
-
-
 class Oaf(DBBase):
+    __tablename__ = "oafs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"))
+    OafName: Mapped[Optional[str]] = mapped_column(String(20))
+    AVUUID: Mapped[Optional[str]] = mapped_column(String(48))
+
+    user: Mapped["SLAvatar"] = relationship(back_populates="oafs")
+    pagemonitors: Mapped[List["PageMonitor"]] = relationship(back_populates="oaf")
+
     def __init__(self, oafName="System", avuuid=None):
         self.OafName = oafName
-        if (avuuid):
+        if avuuid:
             self.AVUUID = avuuid
 
     def getOaf(self):
+        # We use an inline import here to avoid circular dependency issues,
+        # as SLOaf depends on components that might in turn depend on db
+        from orbLib import SLOaf
+
         return SLOaf.BoundSLOafServer(self)
 
 
-users_table = Table('users', meta,
-                    Column('id', Integer, primary_key=True),
-                    Column('avuuid', String(48)),
-                    Column('avname', String(256))
-                    )
-
-
 class SLAvatar(DBBase):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    avuuid: Mapped[Optional[str]] = mapped_column(String(48))
+    avname: Mapped[Optional[str]] = mapped_column(String(256))
+
+    oafs: Mapped[List["Oaf"]] = relationship(back_populates="user")
+
     def __init__(self, avname, avuuid):
         self.avname = avname
         self.avuuid = avuuid
 
-    #    def restoreRunVars(self):
-    #        self.level=SLOaf.NONE
-    #        self.statusTime=0
-    #        self.color=SLOaf.WHITE
-    #        self.message="Newly Loaded"
-    #        self.blink=SLOaf.NONE
-    #        self.systemName=self.avname
-    #        self.status=SLOaf.NONE
-    #        self.systems={}
-    #        self.notifiers={}
-    #        self.controllingSystem=None
-    #        self.children={}
     def getServer(self):
+        # We use an inline import here to avoid circular dependency issues,
+        # as SLOaf depends on components that might in turn depend on db
+        from orbLib import SLOaf
+
         return SLOaf.SLOafServer(self.id)
 
 
-user_mapper = mapper(SLAvatar, users_table, properties={"oafs": relation(Oaf)})
-oaf_mapper = mapper(Oaf, oafs_table,
-                    properties={"pagemonitors": relation(PageMonitor)})
-page_mapper = mapper(PageMonitor, pagemonitors_table)
-
 if __name__ == "__main__":
-    print "Setting up database with test data"
-    print "Creating tables"
-    meta.create_all()
+    print("Setting up database with test data")
+    print("Creating tables")
+    Base.metadata.create_all(engine)
 
-    apf = Oaf("Andy Fundinger")
-    # apf.pagemonitors.append(PageMonitor("http://216.254.64.114:8813/factory","Gerri Lit"))
-    apf.pagemonitors.append(
-        PageMonitor("http://localhost:8813/bookstore/Wilson", "Wilhelm Lit"))
-    apf.pagemonitors.append(
-        PageMonitor("http://localhost:8956/systems/rocketLaunch",
-                    "Daes dae'mar"))
+    with Session() as session:
+        apf = Oaf("Example User")
+        # apf.pagemonitors.append(PageMonitor("http://216.254.64.114:8813/factory","Gerri Lit"))
+        apf.pagemonitors.append(PageMonitor("http://localhost:8813/bookstore/Wilson", "Wilhelm Lit"))
+        apf.pagemonitors.append(PageMonitor("http://localhost:8956/systems/rocketLaunch", "Daes dae'mar"))
 
-    ivm = Oaf("IVM")
-    ivm.pagemonitors.append(PageMonitor("http://localhost:8293/feedServer/"))
+        ivm = Oaf("IVM")
+        ivm.pagemonitors.append(PageMonitor("http://localhost:8293/feedServer/"))
 
-    mmbx = Oaf("MMBX")
-    mmbx.pagemonitors.append(PageMonitor("http://example.com/"))
-    mmbx.pagemonitors.append(PageMonitor("http://localhost/"))
+        mmbx = Oaf("MMBX")
+        mmbx.pagemonitors.append(PageMonitor("http://example.com/"))
+        mmbx.pagemonitors.append(PageMonitor("http://localhost/"))
 
-    cf = SLAvatar(AVNAME, AVUUID)
-    cf.oafs.append(apf)
-    cf.oafs.append(ivm)
-    Session.save(cf)
-    Session.commit()
+        cf = SLAvatar(AVNAME, AVUUID)
+        cf.oafs.append(apf)
+        cf.oafs.append(ivm)
 
-    print PageMonitor.all()
-    print Oaf.all()
+        session.add(cf)
+        session.commit()
