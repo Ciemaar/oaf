@@ -15,7 +15,7 @@ MAIL_PASSWORD = ""
 
 root = resource.Resource()
 # root.putChild('',HomePage())
-oafRoot = OaF.OafServer(None)  # type: ignore
+oafRoot = OaF.OafServer(OaF.System)
 
 
 slIndyMonitor = OaF.System("SL Indy")
