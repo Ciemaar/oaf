@@ -1,8 +1,9 @@
-import wx
+import wx  # type: ignore
 
-from ConfigWindow import ConfigWindow
-from ids import *
 from orbLib import OaF
+
+from .ConfigWindow import ConfigWindow
+from .ids import ID_ABOUT, ID_CONFIG, ID_EXIT
 
 
 class TrayIcon(wx.TaskBarIcon, OaF.Notifier):
@@ -15,10 +16,9 @@ class TrayIcon(wx.TaskBarIcon, OaF.Notifier):
         self.updateIcon()
 
     def updateIcon(self):
-        image = wx.EmptyImage(16, 16)
+        image = wx.Image(16, 16)
         rect = wx.Rect(0, 0, 16, 16)
-        image.SetRGBRect(rect, self.color[0] * 0xFF, self.color[1] * 0xFF,
-                         self.color[2] * 0xFF)
+        image.SetRGBRect(rect, self.color[0] * 0xFF, self.color[1] * 0xFF, self.color[2] * 0xFF)
         bitmap = wx.BitmapFromImage(image)
         # iconFile=wx.Icon("tank2.ico",wx.BITMAP_TYPE_ICO)
         iconFile = wx.IconFromBitmap(bitmap)
@@ -30,15 +30,16 @@ class TrayIcon(wx.TaskBarIcon, OaF.Notifier):
         self.updateIcon()
 
     def CreatePopupMenu(self):
+
         menu = wx.Menu()
         menu.Append(ID_ABOUT, "&About", " Information about this program")
         menu.Append(ID_CONFIG, "&Config", " Configure SLED")
         menu.AppendSeparator()
         menu.Append(ID_EXIT, "E&xit", " Terminate the program")
 
-        wx.EVT_MENU(self, ID_ABOUT, self.onAbout)
-        wx.EVT_MENU(self, ID_CONFIG, self.onConfig)
-        wx.EVT_MENU(self, ID_EXIT, self.onExit)
+        self.Bind(wx.EVT_MENU, self.onAbout, id=ID_ABOUT)
+        self.Bind(wx.EVT_MENU, self.onConfig, id=ID_CONFIG)
+        self.Bind(wx.EVT_MENU, self.onExit, id=ID_EXIT)
 
         return menu
 

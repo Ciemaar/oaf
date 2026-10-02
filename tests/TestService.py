@@ -3,24 +3,21 @@ import sys
 from twisted.internet import reactor
 from twisted.web import resource, server
 
-from orbLib import OaF, MailOaf
+from orbLib import OaF
 
-MAIL_SERVER = ''
-MAIL_USER = ''
-MAIL_PASSWORD = ''
+MAIL_SERVER = ""
+MAIL_USER = ""
+MAIL_PASSWORD = ""
 
 root = resource.Resource()
 # root.putChild('',HomePage())
 oafRoot = OaF.OafServer(None)
 
-slIndyMonitor = OaF.System("SL Indy")
+oafRoot.putSystem("BasicSystem", OaF.System("Basic System"))
+oafRoot.putNotifier("BasicNotifier", OaF.Notifier("Basic Notifier"))
+oafRoot.putNotifier("JsonNotifier", OaF.JsonNotifier("Json Notifier"))
 
-oafRoot.putSystem("SLIndyMonitor", slIndyMonitor)
 oafRoot.putSystem("RedBlackTest", OaF.GoalSystem("RedBlackTest", 500))
-oafRoot.putSystem("IMAPtest", MailOaf.IMAPMailMonitor(MAIL_SERVER, MAIL_USER,
-                                                      MAIL_PASSWORD))
-oafRoot.putSystem("POP3test", MailOaf.POP3MailMonitor(MAIL_SERVER, MAIL_USER,
-                                                      MAIL_PASSWORD))
 
 slSub = OaF.ScaledSubServer("Second Life systems", oafRoot, OaF.CountSystem, 1)
 
@@ -34,11 +31,11 @@ oafRoot.putSystem("dsexport", dsexport)
 
 oafRoot.putNotifier("pickle", OaF.PickleNotifier())
 
-root.putChild("oaf", oafRoot)
+root.putChild(b"oaf", oafRoot)  # type: ignore
 site = server.Site(root)
-if (len(sys.argv) > 1):
-    reactor.listenTCP(int(sys.argv[1]), site)
+if len(sys.argv) > 1:
+    reactor.listenTCP(int(sys.argv[1]), site)  # type: ignore
 else:
-    reactor.listenTCP(8585, site)
-reactor.run()
-print "Reactor stopped."
+    reactor.listenTCP(8585, site)  # type: ignore
+reactor.run()  # type: ignore
+print("Reactor stopped.")
