@@ -4,12 +4,7 @@ from typing import List, Optional
 from sqlalchemy import ForeignKey, String, create_engine, select
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, scoped_session, sessionmaker
 
-# Handle missing defaults
-try:
-    from .defaults import AVNAME, AVUUID
-except ImportError:
-    AVUUID = "default-uuid"
-    AVNAME = "Default User"
+from .defaults import AVNAME, AVUUID
 
 uri = "sqlite:///./testdb.db"
 engine = create_engine(uri)

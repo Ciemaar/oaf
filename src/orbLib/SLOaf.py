@@ -217,8 +217,8 @@ if __name__ == "__main__":
     oafRoot.putNotifier("SLIndy", SLNotifier(slIndyMonitor))
     oafRoot.putSystem("SLIndyMonitor", slIndyMonitor)
     oafRoot.putSystem("google", OaF.PageMonitor("http://google.com/"))
-    oafRoot.putSystem("yahoo", OaF.PageMonitor("http://yahoo.com/", allowedErrors=(b"401",)))
-    oafRoot.putSystem("litfactory", OaF.PageMonitor("http://localhost:8813/bookstore/Wilson", allowedErrors=(b"405",)))
+    oafRoot.putSystem("yahoo", OaF.PageMonitor("http://yahoo.com/", allowedErrors=("401",)))
+    oafRoot.putSystem("litfactory", OaF.PageMonitor("http://localhost:8813/bookstore/Wilson", allowedErrors=("405",)))
     oafRoot.putSystem("OAF Main", OaF.PageMonitor("http://localhost:8000/oaf"))
     oafRoot.putSystem("RedBlackTest", OaF.GoalSystem("RedBlackTest", 500))
 
