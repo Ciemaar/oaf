@@ -1,15 +1,15 @@
-import httplib
+import http.client
 import sys
-from urllib import urlencode
+from urllib.parse import urlencode
 
-AMBIENT_ORB_DEVID = 'RKF-5Y7-AH5'
+AMBIENT_ORB_DEVID = "RKF-5Y7-AH5"
 
 
 def setColor(colorCode, anim=0, comment="No Comment", devID=AMBIENT_ORB_DEVID):
-    connection = httplib.HTTPConnection("www.myambient.com:8080")
-    getRequest = "/java/my_devices/submitdata.jsp?" + \
-                 urlencode({'devID': devID, 'anim': int(anim),
-                            'color': int(colorCode), 'comment': comment})
+    connection = http.client.HTTPConnection("www.myambient.com:8080")
+    getRequest = "/java/my_devices/submitdata.jsp?" + urlencode(
+        {"devID": devID, "anim": int(anim), "color": int(colorCode), "comment": comment}
+    )
     # print getRequest
     connection.request("GET", getRequest)
     responseOb = connection.getresponse()
@@ -17,4 +17,4 @@ def setColor(colorCode, anim=0, comment="No Comment", devID=AMBIENT_ORB_DEVID):
 
 
 if __name__ == "__main__":
-    print setColor((int)(sys.argv[1]), "set+by+orbLib.py")
+    print(setColor((int)(sys.argv[1]), 0, "set+by+orbLib.py"))
